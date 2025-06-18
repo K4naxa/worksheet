@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Glass morphism backgrounds */
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-bg-hover: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  --gradient-success: linear-gradient(135deg, #10b981, #059669);
+  --gradient-warning: linear-gradient(135deg, #f59e0b, #d97706);
+  --gradient-background: linear-gradient(135deg, #1e1b4b, #581c87, #be185d);
+  
+  /* Text colors */
+  --text-primary: rgba(255, 255, 255, 1);
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-disabled: rgba(255, 255, 255, 0.3);
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+  }
+  
+  .glass-card-hover {
+    @apply hover:bg-white/20 transition-all duration-200;
+  }
+  
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-medium transition-all;
+    background: var(--gradient-primary);
+  }
+  
+  .btn-primary:hover {
+    @apply shadow-lg transform scale-105;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors;
+    color: var(--text-primary);
+  }
+  
+  .text-primary {
+    color: var(--text-primary);
+  }
+  
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  
+  .text-muted {
+    color: var(--text-muted);
+  }
+  
+  .text-disabled {
+    color: var(--text-disabled);
+  }
+  
+  .input-field {
+    @apply w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50;
+  }
+}
