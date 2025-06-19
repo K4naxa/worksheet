@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+  enum MealLocation {
+    school
+    work
+    other
+  }
+
+
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   
+  name      String
+  company   String
+  instructor String
+  start_date String?
+  end_date String?
+
+  workedHours Int
+  workedDays Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Add other workday tracker related fields/relations here later
+  // e.g., tasks Task[]
+  workdays Workday[]
+}
+
+// Workday model for storing users loged workdays
+// Users statistics count the values from the users Workdays
+  model Workday{
+    id String @id
+    date String
+    activities String
+    learnings String
+    mealLocation MealLocation // uses MealLocation enum
+    hours Int
+
+    userId String
+    user User @relation(fields: [userId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
