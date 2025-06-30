@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from 'src/auth/constants';
+import { User } from '@prisma/client'; // Adjust the import path based on your project structure
 
 @Injectable()
 export class AuthService {
@@ -9,6 +10,23 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
   ) {}
+
+  async validateUser(
+    email: string,
+    pass: string,
+  ): Promise<Omit<User, 'password'> | null> {
+    const user = await this.userService.findByEmail(email);
+    // If user not found or password is incorrect, return null
+    if (
+      !user ||
+      !(await this.userService.validatePassword(pass, user.password))
+    ) {
+      return null;
+    }
+    // If credentials are valid, return user data (excluding password)
+    const { password, ...result } = user;
+    return result;
+  }
 
   async signIn(
     email: string,
@@ -38,6 +56,13 @@ export class AuthService {
           secret: jwtConstants.secret,
         },
       ),
+    };
+  }
+
+  login(user: Omit<User, 'password'>) {
+    const payload = { email: user.email, sub: user.id };
+    return {
+      access_token: this.jwtService.sign(payload),
     };
   }
 }
