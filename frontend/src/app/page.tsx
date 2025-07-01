@@ -18,8 +18,10 @@ import {
 } from "@/utils/storage";
 import { calculateStats } from "@/utils/stats";
 import { BarChart3, CalendarDays, Plus, Settings, List } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Home() {
+  const { user, logout } = useAuth();
   const [workDays, setWorkDays] = useState<WorkDay[]>([]);
   const [stats, setStats] = useState<WorkStats>({
     totalDays: 0,
@@ -110,6 +112,14 @@ export default function Home() {
               title="Asetukset"
             >
               <Settings className="w-6 h-6" />
+            </button>
+            <button
+              className="p-3 rounded-xl glass-card glass-card-hover text-primary transition-colors"
+              onClick={() => {
+                logout();
+              }}
+            >
+              Kirjaudu ulos
             </button>
           </div>
           <p className="text-secondary text-lg max-w-2xl mx-auto">

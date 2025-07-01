@@ -1,28 +1,8 @@
 "use client";
-import { useAuth } from "../../context/AuthContext";
-import { useState, useEffect, FormEvent } from "react";
-import { LoginData } from "../../types/index.js";
-import { useRouter } from "next/navigation";
+
+import { useState, useEffect } from "react";
 
 export default function Home() {
-  const { login, loading } = useAuth();
-  const [formData, setFormData] = useState<LoginData>({
-    email: "",
-    password: "",
-  });
-  const router = useRouter();
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted with data:", formData);
-    try {
-      await login(formData.email, formData.password);
-    } catch (error) {
-      console.error("Login failed:", error);
-      // Handle login error (e.g., show a notification)
-    }
-  };
-
   return (
     <div
       className="min-h-screen"
@@ -43,10 +23,7 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col items-center  ">
-          <form
-            onSubmit={handleSubmit}
-            className="glass-card m-6 rounded-2xl p-12"
-          >
+          <form action="" className="glass-card m-6 rounded-2xl p-12">
             <h3>Kirjaudu sisään</h3>
 
             <div className="p-6 space-y-6">
@@ -59,10 +36,6 @@ export default function Home() {
                   id="email"
                   className="input-field resize-none h-12"
                   placeholder="Sähköposti"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
                 />
               </div>
 
@@ -75,10 +48,6 @@ export default function Home() {
                   id="password"
                   className="input-field resize-none h-12"
                   placeholder="Salasana"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
                 />
               </div>
             </div>

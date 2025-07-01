@@ -20,7 +20,7 @@ datasource db {
 
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String   @unique
   password  String   
   name      String
@@ -37,6 +37,16 @@ model User {
   // Add other workday tracker related fields/relations here later
   // e.g., tasks Task[]
   workdays Workday[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id           String   @id @default(uuid()) 
+  hashedToken  String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade) // If a user is deleted, their tokens are too
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
 }
 
 // Workday model for storing users loged workdays

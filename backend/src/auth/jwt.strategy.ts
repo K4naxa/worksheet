@@ -14,6 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: any) {
+    console.log('JWT payload:', payload);
     // The payload contains the user data that was signed in the JWT
     // the payload structure should match what you signed in the AuthService
     return { userId: payload.sub, email: payload.email };

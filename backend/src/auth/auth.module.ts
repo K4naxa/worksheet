@@ -7,12 +7,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from 'src/auth/auth.controller';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
   controllers: [AuthController],
   imports: [
     UserModule,
     PassportModule,
+    PrismaModule,
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,

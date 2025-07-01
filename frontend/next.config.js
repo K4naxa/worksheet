@@ -1,9 +1,12 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  experimental: {
-    appDir: true,
+const nextConfig = {};
+
+const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: "default-src 'self'; script-src 'self'",
   },
-};
+];
 
 module.exports = {
   turbopack: {
@@ -12,6 +15,16 @@ module.exports = {
       underscore: "lodash",
     },
     resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".json"],
+  },
+
+  // Enable header security
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: securityHeaders,
+      },
+    ];
   },
 };
 
