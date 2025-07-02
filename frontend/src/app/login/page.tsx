@@ -1,28 +1,6 @@
-"use client";
-import { useAuth } from "../../context/AuthContext";
-import { useState, useEffect, FormEvent } from "react";
-import { LoginData } from "../../types/index.js";
-import { useRouter } from "next/navigation";
+import LoginButton from "../../components/LoginButton";
 
 export default function Home() {
-  const { login, loading } = useAuth();
-  const [formData, setFormData] = useState<LoginData>({
-    email: "",
-    password: "",
-  });
-  const router = useRouter();
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted with data:", formData);
-    try {
-      await login(formData.email, formData.password);
-    } catch (error) {
-      console.error("Login failed:", error);
-      // Handle login error (e.g., show a notification)
-    }
-  };
-
   return (
     <div
       className="min-h-screen"
@@ -43,49 +21,9 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col items-center  ">
-          <form
-            onSubmit={handleSubmit}
-            className="glass-card m-6 rounded-2xl p-12"
-          >
-            <h3>Kirjaudu sisään</h3>
-
-            <div className="p-6 space-y-6">
-              {/* Activities */}
-              <div className="">
-                <label htmlFor="email">Sähköposti</label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  className="input-field resize-none h-12"
-                  placeholder="Sähköposti"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
-
-              {/* Learnings */}
-              <div className="">
-                <label htmlFor="password">Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  className="input-field resize-none h-12"
-                  placeholder="Salasana"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-            <button type="submit" className="btn-primary">
-              Kirjaudu sisään
-            </button>
-          </form>
+          <div className="glass-card m-6 rounded-2xl p-12">
+            <LoginButton />
+          </div>
         </div>
       </div>
     </div>

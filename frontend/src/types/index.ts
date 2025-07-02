@@ -3,11 +3,20 @@ export interface WorkDay {
   date: string;
   activities: string;
   learnings: string;
-  hoursWorked: number;
+  hours: number;
   mealLocation: "school" | "workplace" | "other";
   mealLocationOther?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateWorkDay {
+  date: string; // ISO date string
+  activities: string;
+  learnings: string;
+  hours: number;
+  mealLocation: "school" | "workplace" | "other";
+  mealLocationOther?: string; // Optional, only if mealLocation is "other"
 }
 
 export interface WorkPracticeSettings {

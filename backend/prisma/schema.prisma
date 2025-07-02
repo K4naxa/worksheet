@@ -32,36 +32,25 @@ model User {
   workedHours Int
   workedDays Int
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime? @updatedAt
 
-  // Add other workday tracker related fields/relations here later
-  // e.g., tasks Task[]
   workdays Workday[]
-  refreshTokens RefreshToken[]
-}
-
-model RefreshToken {
-  id           String   @id @default(uuid()) 
-  hashedToken  String   @unique
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade) // If a user is deleted, their tokens are too
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
 }
 
 // Workday model for storing users loged workdays
 // Users statistics count the values from the users Workdays
   model Workday{
-    id String @id
+    id String @id @default(uuid())
     date String
     activities String
     learnings String
     mealLocation MealLocation // uses MealLocation enum
+    mealLocationOther String? // Optional, only if mealLocation is "other"
     hours Int
 
     userId String
     user User @relation(fields: [userId], references: [id])
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime? @updatedAt
   }

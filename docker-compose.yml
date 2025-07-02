@@ -1,14 +1,41 @@
 services:
   postgres:
-    image: postgres:14
+    image: postgres:latest
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: yourpassword
-      POSTGRES_DB: workday_tracker
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: worksheet
     ports:
     - "5432:5432"
     volumes:
     - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/worksheet
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: root
+      KC_HOSTNAME: localhost
+      KC_PROXY: edge
+      KC_HTTP_ENABLED: "true"
+    ports:
+    - "8080:8080"
+    - "8443:8443"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+    - ./keycloak-themes:/opt/keycloak/themes
+    command: [ "start-dev" ]
 
   backend:
     build: ./backend
@@ -17,12 +44,31 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: yourpassword
-      DB_NAME: workday_tracker
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: worksheet
       JWT_SECRET: your_secret_key
+      KEYCLOAK_ISSUER: http://localhost:8080/realms/worksheet-realm
+      KEYCLOAK_CLIENT_ID: worksheet-backend
+      KEYCLOAK_CLIENT_SECRET: your_client_secret
+      KEYCLOAK_REALM: worksheet-realm
     depends_on:
-    - postgres
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    ports:
+    - "3000:3000"
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
+      NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8080
+      KEYCLOAK_CLIENT_ID: worksheet-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   pgdata:
