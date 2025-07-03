@@ -1,15 +1,3 @@
-export interface WorkDay {
-  id: string;
-  date: string;
-  activities: string;
-  learnings: string;
-  hours: number;
-  mealLocation: "school" | "workplace" | "other";
-  mealLocationOther?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface CreateWorkDay {
   date: string; // ISO date string
   activities: string;
@@ -36,7 +24,37 @@ export interface WorkStats {
   };
 }
 
-export interface LoginData {
+export interface User {
+  id: string;
   email: string;
-  password: string;
+  name: string;
+  registrationCompleted: boolean;
+  workdays?: Workday[] | null;
+  company: string | null;
+  instructor: string | null;
+
+  start_date: Date | null;
+  end_date: Date | null;
+}
+
+export interface Workday {
+  id: string;
+  date: Date;
+  activities: string;
+  learnings: string;
+  mealLocation: string; // Enum type for meal location
+  mealLocationOther: string | null; // Optional, only if mealLocation is "other"
+  hours: number;
+
+  createdAt: Date;
+  updatedAt: Date | null;
+}
+
+// Registration
+export interface RegistrationComplition {
+  company: string;
+  instructor: string;
+  startDate: string; // ISO date string
+  endDate: string; // ISO date string
+  workdays: number[]; // Array of integers representing workdays (0 = Sunday, 1 = Monday, etc.)
 }

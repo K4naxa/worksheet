@@ -1,6 +1,7 @@
 import "./globals.css";
 import "./manifest.js";
 import AuthProvider from "../context/AuthContext";
+import { UserProvider } from "@/context/UserContext";
 
 export default function RootLayout({
   children,
@@ -10,7 +11,9 @@ export default function RootLayout({
   return (
     <html lang="fi">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <UserProvider>{children}</UserProvider>
+        </AuthProvider>
       </body>
     </html>
   );

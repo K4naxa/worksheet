@@ -18,10 +18,9 @@ import {
 } from "@/utils/storage";
 import { calculateStats } from "@/utils/stats";
 import { BarChart3, CalendarDays, Plus, Settings, List } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { signOut } from "next-auth/react";
 
 export default function Home() {
-  const { user, logout } = useAuth();
   const [workDays, setWorkDays] = useState<WorkDay[]>([]);
   const [stats, setStats] = useState<WorkStats>({
     totalDays: 0,
@@ -116,7 +115,7 @@ export default function Home() {
             <button
               className="p-3 rounded-xl glass-card glass-card-hover text-primary transition-colors"
               onClick={() => {
-                logout();
+                signOut();
               }}
             >
               Kirjaudu ulos

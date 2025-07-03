@@ -1,18 +1,15 @@
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicRoutes = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/reset-password",
-];
+const publicRoutes = ["/login", "/forgot-password", "/reset-password"];
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   console.log("🛡️ Middleware: Processing request to:", req.nextUrl.pathname);
 
-  // Check for a token
-  const token = req.cookies.get("access_token")?.value;
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const registrationCompleted = token?.registrationCompleted || false; // Default to false if not set
+
   const { pathname } = req.nextUrl;
 
   // 1. Allow API routes to handle their own auth
@@ -21,7 +18,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Allow static assets
+  // 1.1. Allow static assets
   if (
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon.ico") ||
@@ -37,17 +34,34 @@ export function middleware(req: NextRequest) {
 
   console.log("🔍 Middleware: Route analysis:", {
     pathname,
-    hasToken: !!token,
+    isAuthenticated: !!token,
+    registrationCompleted,
     isPublicRoute,
     isProtectedRoute,
   });
 
-  // 3. If no token and accessing protected route -> redirect to login
+  // 2. If no session and accessing protected route -> redirect to login
   if (!token && isProtectedRoute) {
     console.log(
-      "🚫 Middleware: No token for protected route, redirecting to login"
+      "🚫 Middleware: No session for protected route, redirecting to login"
     );
     return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  // 3. If session exists but not completed registration
+  if (token && !registrationCompleted && pathname !== "/register") {
+    console.log(
+      "🚫 Middleware: Registration not completed, redirecting to registration"
+    );
+    return NextResponse.redirect(new URL("/register", req.url));
+  }
+
+  // 4. if session exists and registration is completed
+  if (token && registrationCompleted && isPublicRoute) {
+    console.log(
+      "Middleware: User is authenticated and registered, rerouting to home"
+    );
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   console.log("✅ Middleware: Allowing request through");

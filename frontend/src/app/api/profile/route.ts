@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import axios, { AxiosError } from "axios";
+import { User } from "@/types";
 
 export async function GET(request: NextRequest) {
   // 1. Get the session

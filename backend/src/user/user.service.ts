@@ -1,87 +1,102 @@
 // src/user/user.service.ts
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
-
-export interface CreateUserDto {
-  email: string;
-  password: string;
-  name: string;
-  company: string;
-  instructor: string;
-  start_date: string;
-  end_date: string;
-}
+import { KeycloakProfile } from 'src/types/keycloack.types';
+import { ExportUser, ExportWorkday } from 'src/types/export.types';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(createUserDto: CreateUserDto) {
-    const { email, password, name, company, instructor, start_date, end_date } =
-      createUserDto;
+  async findOrCreateUser(keycloackUser: KeycloakProfile): Promise<ExportUser> {
+    const { sub, email, name } = keycloackUser;
 
     // Check if user already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email },
+    let user = await this.prisma.user.findUnique({
+      where: { id: sub },
     });
 
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+    if (!user) {
+      // If user doesn't exist, create a new one
+      user = await this.prisma.user.create({
+        data: {
+          id: sub,
+          email: email,
+          name: name,
+          registrationCompleted: false,
+        },
+      });
+    } else if (user.email !== email) {
+      // Update user information if email has changed
+      user = await this.prisma.user.update({
+        where: { id: sub },
+        data: {
+          email: email,
+          name: name,
+        },
+      });
     }
 
-    // Hash password with salt rounds of 12 (secure but not too slow)
-    const hashedPassword: string = await bcrypt.hash(password, 12);
+    // If registration is not completed, return early with minimal user data
+    // This avoids unnecessary database queries for workdays
+    // and allows the client to redirect the user to complete their profile
+    if (!user.registrationCompleted) {
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        registrationCompleted: user.registrationCompleted as boolean,
+        company: null,
+        instructor: null,
+        start_date: null,
+        end_date: null,
 
-    // Create user in database
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name,
-        company,
-        instructor,
-        start_date,
-        end_date,
-        workedHours: 0,
-        workedDays: 0,
-      },
+        workdays: null,
+      };
+    }
+
+    // If registration is completed, fetch the user's workdays
+    // This is only done if the user has completed their profile
+    const workdays: ExportWorkday[] = await this.prisma.workday.findMany({
+      where: { userId: user.id },
       select: {
         id: true,
-        email: true,
-        name: true,
+        date: true,
+        activities: true,
+        learnings: true,
+        mealLocation: true,
+        mealLocationOther: true,
+        hours: true,
         createdAt: true,
+        updatedAt: true,
       },
     });
+
+    // Return the user data in the desired format
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      registrationCompleted: user.registrationCompleted as boolean,
+      company: user.company,
+      instructor: user.instructor,
+      start_date: user.start_date,
+      end_date: user.end_date,
+
+      workdays: workdays,
+    };
+  }
+
+  async getProfile(keycloakUser: KeycloakProfile): Promise<ExportUser> {
+    const user = await this.findOrCreateUser(keycloakUser);
 
     return user;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { email },
-    });
-  }
-
-  async findById(id: string): Promise<User | null> {
-    return this.prisma.user
-      .findUnique({
-        where: { id },
-      })
-      .catch(() => {
-        throw new NotFoundException(`User with ID ${id} not found`);
-      });
-  }
-
-  async validatePassword(
-    plainPassword: string,
-    hashedPassword: string,
-  ): Promise<boolean> {
-    return bcrypt.compare(plainPassword, hashedPassword);
+  async getRegistrationStatus(
+    keycloakUser: KeycloakProfile,
+  ): Promise<{ registrationCompleted: boolean }> {
+    const user = await this.findOrCreateUser(keycloakUser);
+    return { registrationCompleted: user.registrationCompleted };
   }
 }

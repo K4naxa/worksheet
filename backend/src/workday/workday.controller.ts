@@ -1,8 +1,8 @@
-import { Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Controller, Post, Request } from '@nestjs/common';
 import { WorkdayService } from 'src/workday/workday.service';
 
-import { AuthenticatedUser } from 'src/auth/interfaces/authenticated-user.interface';
 import { CreateWorkdayDto } from 'src/workday/dto/workday.dto';
+import { KeycloakProfile } from 'src/types/keycloack.types';
 
 @Controller('workday')
 export class WorkdayController {
@@ -10,7 +10,7 @@ export class WorkdayController {
 
   @Post()
   async saveWorkDay(
-    @Request() req: { user: AuthenticatedUser; body: CreateWorkdayDto },
+    @Request() req: { user: KeycloakProfile; body: CreateWorkdayDto },
   ) {
     console.log(
       'Saving workday for user:',

@@ -33,11 +33,13 @@ import {
     ConfigModule.forRoot({ isGlobal: true }),
     KeycloakConnectModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
-        authServerUrl: configService.get<string>('KEYCLOAK_AUTH_URL'), // e.g., http://localhost:8080
-        realm: configService.get<string>('KEYCLOAK_REALM'), // e.g., my-app
-        clientId: configService.get<string>('KEYCLOAK_CLIENT_ID'), // e.g., nextjs-bff
-        secret: configService.get<string>('KEYCLOAK_CLIENT_SECRET'), // Your secret from Keycloak
-        // This tells Keycloak to look for the token in the Authorization header.
+        // Keycloak configuration
+        authServerUrl: configService.get<string>('KEYCLOAK_AUTH_URL') || '',
+        realm: configService.get<string>('KEYCLOAK_REALM') || '',
+        clientId:
+          configService.get<string>('KEYCLOAK_CLIENT_ID') || ('' as string),
+        secret: configService.get<string>('KEYCLOAK_CLIENT_SECRET') || '',
+
         bearerOnly: true,
       }),
       inject: [ConfigService],
