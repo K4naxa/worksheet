@@ -30,7 +30,7 @@ export default function Home() {
     totalDays: 0,
     totalHours: 0,
     practiceProgress: 0,
-    mealDistribution: { school: 0, workplace: 0, other: 0 },
+    mealDistribution: { school: 0, work: 0, other: 0 },
   });
 
   const settings = {

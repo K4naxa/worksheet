@@ -19,7 +19,7 @@ export interface WorkStats {
   practiceProgress: number; // percentage 0-100
   mealDistribution: {
     school: number;
-    workplace: number;
+    work: number;
     other: number;
   };
 }

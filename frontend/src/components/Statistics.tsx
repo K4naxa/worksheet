@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import React from 'react';
-import { Calendar, Clock, TrendingUp, MapPin } from 'lucide-react';
-import { WorkStats } from '@/types';
+import React from "react";
+import { Calendar, Clock, TrendingUp, MapPin } from "lucide-react";
+import { WorkStats } from "@/types";
 
 interface StatisticsProps {
   stats: WorkStats;
@@ -12,39 +12,54 @@ export const Statistics: React.FC<StatisticsProps> = ({ stats }) => {
   const statItems = [
     {
       icon: Calendar,
-      label: 'Työpäivät yhteensä',
+      label: "Työpäivät yhteensä",
       value: stats.totalDays,
-      color: 'from-primary-500 to-secondary-500',
-      description: 'päivää työskennelty'
+      color: "from-primary-500 to-secondary-500",
+      description: "päivää työskennelty",
     },
     {
       icon: Clock,
-      label: 'Tunnit yhteensä',
+      label: "Tunnit yhteensä",
       value: stats.totalHours,
-      color: 'from-success-500 to-success-600',
-      description: 'tuntia työskennelty'
+      color: "from-success-500 to-success-600",
+      description: "tuntia työskennelty",
     },
     {
       icon: TrendingUp,
-      label: 'Harjoittelu edistyminen',
+      label: "Harjoittelu edistyminen",
       value: `${Math.round(stats.practiceProgress)}%`,
-      color: 'from-yellow-500 to-orange-500',
-      description: 'harjoittelusta suoritettu'
-    }
+      color: "from-yellow-500 to-orange-500",
+      description: "harjoittelusta suoritettu",
+    },
   ];
 
   const mealLocationData = [
-    { label: 'Koulu', value: stats.mealDistribution.school, color: 'bg-primary-500' },
-    { label: 'Työpaikka', value: stats.mealDistribution.workplace, color: 'bg-success-500' },
-    { label: 'Muu', value: stats.mealDistribution.other, color: 'bg-orange-500' }
+    {
+      label: "Koulu",
+      value: stats.mealDistribution.school,
+      color: "bg-primary-500",
+    },
+    {
+      label: "Työpaikka",
+      value: stats.mealDistribution.work,
+      color: "bg-success-500",
+    },
+    {
+      label: "Muu",
+      value: stats.mealDistribution.other,
+      color: "bg-orange-500",
+    },
   ];
 
-  const totalMeals = stats.mealDistribution.school + stats.mealDistribution.workplace + stats.mealDistribution.other;
+  const totalMeals =
+    stats.mealDistribution.school +
+    stats.mealDistribution.work +
+    stats.mealDistribution.other;
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-primary mb-6">Tilastot</h2>
-      
+
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {statItems.map((item, index) => {
@@ -54,7 +69,9 @@ export const Statistics: React.FC<StatisticsProps> = ({ stats }) => {
               key={index}
               className="glass-card rounded-2xl p-6 hover:transform hover:scale-105 transition-all duration-300"
             >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${item.color} flex items-center justify-center mb-4`}>
+              <div
+                className={`w-12 h-12 rounded-xl bg-gradient-to-r ${item.color} flex items-center justify-center mb-4`}
+              >
                 <Icon className="w-6 h-6 text-white" />
               </div>
               <div className="text-3xl font-bold text-primary mb-1">
@@ -63,9 +80,7 @@ export const Statistics: React.FC<StatisticsProps> = ({ stats }) => {
               <div className="text-secondary text-sm font-medium mb-1">
                 {item.label}
               </div>
-              <div className="text-muted text-xs">
-                {item.description}
-              </div>
+              <div className="text-muted text-xs">{item.description}</div>
             </div>
           );
         })}
@@ -78,14 +93,17 @@ export const Statistics: React.FC<StatisticsProps> = ({ stats }) => {
             <MapPin className="w-6 h-6 text-primary" />
             <h3 className="text-xl font-bold text-primary">Missä söit</h3>
           </div>
-          
+
           <div className="space-y-4">
             {mealLocationData.map((item, index) => {
-              const percentage = totalMeals > 0 ? (item.value / totalMeals) * 100 : 0;
+              const percentage =
+                totalMeals > 0 ? (item.value / totalMeals) * 100 : 0;
               return (
                 <div key={index} className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-secondary font-medium">{item.label}</span>
+                    <span className="text-secondary font-medium">
+                      {item.label}
+                    </span>
                     <span className="text-muted text-sm">
                       {item.value} päivää ({Math.round(percentage)}%)
                     </span>
