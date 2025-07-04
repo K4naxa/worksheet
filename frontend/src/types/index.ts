@@ -3,7 +3,7 @@ export interface CreateWorkDay {
   activities: string;
   learnings: string;
   hours: number;
-  mealLocation: "school" | "workplace" | "other";
+  mealLocation: "school" | "work" | "other";
   mealLocationOther?: string; // Optional, only if mealLocation is "other"
 }
 
@@ -43,7 +43,7 @@ export interface Workday {
   date: Date;
   activities: string;
   learnings: string;
-  mealLocation: string; // Enum type for meal location
+  mealLocation: "school" | "work" | "other"; // Enum type for meal location
   mealLocationOther: string | null; // Optional, only if mealLocation is "other"
   hours: number;
 

@@ -47,18 +47,27 @@ export default function Home() {
     setStats(calculateStats(savedWorkDays, savedSettings));
   }, []);
 
-  const handleSaveWorkDay = (workDay: WorkDay) => {
-    saveWorkDay(workDay);
-    const updatedWorkDays = getWorkDays();
-    setWorkDays(updatedWorkDays);
-    setStats(calculateStats(updatedWorkDays, settings));
-    setEditingWorkDay(undefined);
+  const handleSaveWorkDay = async (workDay: WorkDay) => {
+    try {
+      // Save the work day to server
+      await saveWorkDay(workDay);
+
+      // pull the updated work days from server
+      const updatedWorkDays = await getWorkDays();
+      setWorkDays(updatedWorkDays);
+      setStats(calculateStats(updatedWorkDays, settings));
+      setEditingWorkDay(undefined);
+    } catch (error) {
+      console.error("Error saving work day:", error);
+      alert("Työpäivän tallentaminen epäonnistui. Yritä uudelleen.");
+      return;
+    }
   };
 
-  const handleDeleteWorkDay = (date: string) => {
+  const handleDeleteWorkDay = async (date: string) => {
     if (window.confirm("Haluatko varmasti poistaa tämän työpäivän?")) {
-      deleteWorkDay(date);
-      const updatedWorkDays = getWorkDays();
+      await deleteWorkDay(date);
+      const updatedWorkDays = await getWorkDays();
       setWorkDays(updatedWorkDays);
       setStats(calculateStats(updatedWorkDays, settings));
       if (selectedDate === date) {

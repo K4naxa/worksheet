@@ -1,32 +1,56 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Workday } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { KeycloakProfile } from 'src/types/keycloack.types';
 import { CreateWorkdayDto } from 'src/workday/dto/workday.dto';
 
 @Injectable()
 export class WorkdayService {
   constructor(private prisma: PrismaService) {}
 
-  async saveWorkDay(userId: string, workday: CreateWorkdayDto) {
+  async saveWorkDay(user: KeycloakProfile, workday: CreateWorkdayDto) {
     try {
-      console.log('Saving workday for user:', userId, 'with data:', workday);
+      const workDate = new Date(workday.date);
       // Check if a workday already exists for the user on the same date
       const existingWorkday = await this.prisma.workday.findFirst({
         where: {
-          userId: userId,
-          date: workday.date,
+          userId: user.sub,
+          date: workDate,
         },
       });
 
+      // If a workday already exists, update it
       if (existingWorkday) {
-        throw new ConflictException('Workday already exists for this date');
+        console.log(
+          `Workday already exists for user ${user.email} on date ${workday.date}, Updating existing entry.`,
+        );
+
+        const updatedWorkday = await this.prisma.workday.update({
+          where: { id: existingWorkday.id },
+          data: {
+            activities: workday.activities,
+            learnings: workday.learnings,
+            mealLocation: workday.mealLocation,
+            mealLocationOther:
+              workday.mealLocation === 'other'
+                ? workday.mealLocationOther
+                : null,
+            hours: workday.hours,
+          },
+        });
+
+        return updatedWorkday;
       }
+      // If no existing workday, create a new one
+      console.log(
+        `No existing workday found for user ${user.email} on date ${workday.date}, Creating new entry.`,
+      );
 
       // Create a new workday entry
       const newWorkday = await this.prisma.workday.create({
         data: {
-          userId: userId,
-          date: workday.date,
+          userId: user.sub,
+          date: workDate,
           activities: workday.activities,
           learnings: workday.learnings,
           mealLocation: workday.mealLocation,

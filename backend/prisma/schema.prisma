@@ -12,7 +12,7 @@ datasource db {
 
 
   enum MealLocation {
-    home
+    school
     work
     other
   }

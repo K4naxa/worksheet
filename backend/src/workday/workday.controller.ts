@@ -14,10 +14,10 @@ export class WorkdayController {
   ) {
     console.log(
       'Saving workday for user:',
-      req.user.id,
+      req.user.email,
       'with data:',
       req.body,
     );
-    return this.workdayService.saveWorkDay(req.user.id, req.body);
+    return this.workdayService.saveWorkDay(req.user, req.body);
   }
 }

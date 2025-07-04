@@ -7,7 +7,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { getProfile } from "@/services/api";
 
@@ -69,6 +69,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // If the user is not authenticated, clear the profile
       setUserProfile(null);
       return;
+    }
+
+    if (session?.error === "RefreshAccessTokenError") {
+      console.error("Refresh token failed, signing out.");
+      signOut();
     }
 
     fetchProfile();
