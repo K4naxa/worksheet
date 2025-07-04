@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // 3. Call the nestjs backend with the auth header.
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/profile`,
+      `${process.env.BACKEND_URL}/user/profile`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

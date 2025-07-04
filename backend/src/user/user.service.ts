@@ -2,92 +2,74 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { KeycloakProfile } from 'src/types/keycloack.types';
-import { ExportUser, ExportWorkday } from 'src/types/export.types';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findOrCreateUser(keycloackUser: KeycloakProfile): Promise<ExportUser> {
+  async findOrCreateUser(keycloackUser: KeycloakProfile): Promise<User> {
     const { sub, email, name } = keycloackUser;
 
-    // Check if user already exists
-    let user = await this.prisma.user.findUnique({
-      where: { id: sub },
+    // Add debugging
+    console.log('Attempting to find or create user with:', {
+      sub,
+      email,
+      name,
     });
 
-    if (!user) {
-      // If user doesn't exist, create a new one
-      user = await this.prisma.user.create({
+    try {
+      // Check if user already exists first
+      const existingUser = await this.prisma.user.findUnique({
+        where: { id: sub },
+        include: {
+          userWorkdays: true,
+        },
+      });
+
+      if (existingUser) {
+        console.log('User already exists, updating:', existingUser.id);
+        // Update existing user
+        const updatedUser = await this.prisma.user.update({
+          where: { id: sub },
+          data: {
+            email: email,
+            name: name,
+          },
+          include: {
+            userWorkdays: true,
+          },
+        });
+        return updatedUser;
+      }
+
+      console.log('User does not exist, creating new user');
+      // Create new user
+      const newUser = await this.prisma.user.create({
         data: {
           id: sub,
           email: email,
           name: name,
           registrationCompleted: false,
+          company: null,
+          instructor: null,
+          start_date: null,
+          end_date: null,
+          workdays: [],
+        },
+        include: {
+          userWorkdays: true,
         },
       });
-    } else if (user.email !== email) {
-      // Update user information if email has changed
-      user = await this.prisma.user.update({
-        where: { id: sub },
-        data: {
-          email: email,
-          name: name,
-        },
-      });
+
+      return newUser;
+    } catch (error) {
+      console.error('Error in findOrCreateUser:', error);
+      throw error;
     }
-
-    // If registration is not completed, return early with minimal user data
-    // This avoids unnecessary database queries for workdays
-    // and allows the client to redirect the user to complete their profile
-    if (!user.registrationCompleted) {
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        registrationCompleted: user.registrationCompleted as boolean,
-        company: null,
-        instructor: null,
-        start_date: null,
-        end_date: null,
-
-        workdays: null,
-      };
-    }
-
-    // If registration is completed, fetch the user's workdays
-    // This is only done if the user has completed their profile
-    const workdays: ExportWorkday[] = await this.prisma.workday.findMany({
-      where: { userId: user.id },
-      select: {
-        id: true,
-        date: true,
-        activities: true,
-        learnings: true,
-        mealLocation: true,
-        mealLocationOther: true,
-        hours: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    // Return the user data in the desired format
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      registrationCompleted: user.registrationCompleted as boolean,
-      company: user.company,
-      instructor: user.instructor,
-      start_date: user.start_date,
-      end_date: user.end_date,
-
-      workdays: workdays,
-    };
   }
 
-  async getProfile(keycloakUser: KeycloakProfile): Promise<ExportUser> {
+  async getProfile(keycloakUser: KeycloakProfile): Promise<User> {
     const user = await this.findOrCreateUser(keycloakUser);
 
     return user;
@@ -98,5 +80,32 @@ export class UserService {
   ): Promise<{ registrationCompleted: boolean }> {
     const user = await this.findOrCreateUser(keycloakUser);
     return { registrationCompleted: user.registrationCompleted };
+  }
+
+  async completeRegistration(
+    keycloakUser: KeycloakProfile,
+    body: {
+      company: string;
+      instructor: string;
+      startDate: string; // ISO date string
+      endDate: string; // ISO date string
+      workdays: number[]; // Array of integers representing workdays (0 = Sunday, 1 = Monday, etc.)
+    },
+  ) {
+    // Update user with registration details
+    const updatedUser = await this.prisma.user.update({
+      where: { id: keycloakUser.sub },
+      data: {
+        company: body.company,
+        instructor: body.instructor,
+        start_date: new Date(body.startDate),
+        end_date: new Date(body.endDate),
+        registrationCompleted: true,
+        workdays: body.workdays,
+      },
+    });
+
+    // Return the updated user data
+    return updatedUser;
   }
 }

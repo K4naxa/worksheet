@@ -9,11 +9,16 @@ import {
   LogOut,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useActionState } from "react";
 import { signOut } from "next-auth/react";
 
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
 export default function Home() {
+  const router = useRouter();
+  const { data: session, update } = useSession();
   const weekDays = [
     { value: 1, label: "Maanantai" },
     { value: 2, label: "Tiistai" },
@@ -57,17 +62,35 @@ export default function Home() {
 
     try {
       await completeRegistration(formData);
-      // Reset form data after successful submission
 
-      // Here you would typically send formData to your backend
-      console.log("Form Data Submitted:", formData);
+      // If registration is successful, update session state
+      // This will trigger a re-render and update the session context
+      await update();
+
+      // Redirect to home page after successful registration
+      console.log(
+        "✅Registration completed successfully, redirecting to home!"
+      );
+      router.push("/");
+      router.refresh();
     } catch (err) {
       console.error("Error submitting form:", err);
-      setError("An error occurred while submitting the form.");
+      setError("Virhe rekisteröinnissä. Tarkista syötteet ja yritä uudelleen.");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Reset error message after 5 seconds
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+
+      return () => clearTimeout(timer); // Cleanup timer on unmount
+    }
+  }, [error]);
 
   return (
     <div
@@ -93,6 +116,14 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Error message */}
+            <div className="flex justify-center p-4 w-full">
+              {error && (
+                <div className="bg-red-500/20 text-red-500 p-4 rounded-lg mb-4">
+                  {error}
+                </div>
+              )}
+            </div>
             <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
               {/* company Section */}
               <div className="space-y-3">

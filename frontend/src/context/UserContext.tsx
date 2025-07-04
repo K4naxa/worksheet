@@ -39,6 +39,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    // This helps prevent the double-fetch in React Strict Mode.
+    if (isLoading || userProfile) {
+      return;
+    }
+
     setIsLoading(true);
     try {
       console.log("Fetching user profile from backend...");
@@ -57,6 +62,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (status === "loading") {
       // Session is still being determined, do nothing yet.
+      return;
+    }
+
+    if (status === "unauthenticated") {
+      // If the user is not authenticated, clear the profile
+      setUserProfile(null);
       return;
     }
 

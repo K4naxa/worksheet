@@ -6,24 +6,30 @@ const nextApiClient = axios.create({});
 
 // -- Business Logic Functions (via Next.js API proxy) --
 
-export const completeRegistration = (
-  data: RegistrationComplition
-): Promise<User> => {
+export const completeRegistration = async (data: RegistrationComplition) => {
   console.log("✅ Completing registration via Next.js API proxy");
 
   try {
-    const response = nextApiClient.post("/api/register", data);
+    const response = await nextApiClient.post("/api/register", data);
     console.log("✅Registration successfull, redirecting to home page");
 
-    window.location.href = "/";
+    return response.data;
   } catch (error) {
-    console.error("❌ Error completing registration:", error);
-    throw new Error("Failed to complete registration");
+    // Handle Axios errors properly
+    if (axios.isAxiosError(error)) {
+      console.error(
+        "❌ Error completing registration:",
+        error.response?.data?.message || error.message
+      );
+      // Throw a more specific error to be caught by the component
+      throw new Error(
+        error.response?.data?.message || "Failed to complete registration"
+      );
+    }
+    // Handle other types of errors
+    console.error("❌ An unexpected error occurred:", error);
+    throw new Error("An unexpected error occurred during registration.");
   }
-
-  return nextApiClient
-    .post("/api/register", data)
-    .then((response) => response.data);
 };
 
 // Get the current users profile including workdays

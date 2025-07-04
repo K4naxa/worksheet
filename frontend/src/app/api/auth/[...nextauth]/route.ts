@@ -2,6 +2,24 @@ import axios from "axios";
 import NextAuth, { AuthOptions } from "next-auth";
 import KeycloackProvider from "next-auth/providers/keycloak";
 
+const fetchRegistrationStatus = async (token: string): Promise<boolean> => {
+  try {
+    console.log("Fetching registration completed status from backend...");
+    const response = await axios.get(
+      `${process.env.BACKEND_URL}/user/registration-status`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data.registrationCompleted as boolean;
+  } catch (error) {
+    console.error("Error fetching registration status:", error);
+    throw error;
+  }
+};
+
 // This code runs on the server side only
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -15,31 +33,30 @@ export const authOptions: AuthOptions = {
 
   // Callbacks to handle tokens and session
   callbacks: {
-    async jwt({ token, account }) {
-      if (account) {
+    async jwt({ token, account, trigger }) {
+      // This callback is called whenever a JWT is created or updated
+      if (account && account.access_token) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
+        // Fetching registration status only on the initial login
+        token.registrationCompleted = (await fetchRegistrationStatus(
+          account.access_token
+        )) as boolean;
+      }
 
-        // Fetch Registration Completed Status
+      // This block runs when the session is updated MANUALLY (e.g., after registration
+      if (trigger === "update" && token.accessToken) {
+        console.log("Updating JWT token with registration status...");
         try {
-          console.log("Fetching registration completed status...");
-          const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/registration-status`,
-            {
-              headers: {
-                Authorization: `Bearer ${token.accessToken}`,
-              },
-            }
+          const registrationStatus = await fetchRegistrationStatus(
+            token.accessToken as string
           );
-          token.registrationCompleted = response.data.registrationCompleted;
+          token.registrationCompleted = registrationStatus;
         } catch (error) {
-          console.error("Error fetching registration status:", error);
+          console.error("Error updating registration status in JWT:", error);
+          // Optionally, you can set a default value or handle the error
           token.registrationCompleted = false;
-
-          // If there's an error, we can assume registration is not completed
         }
-
-        return token;
       }
 
       return token; // Return the token unchanged if no account is present
@@ -51,6 +68,8 @@ export const authOptions: AuthOptions = {
       // To the session object. This allows us to access the server-side session
       session.accessToken = token.accessToken as string;
       session.user.id = token.sub as string; // Use sub as user ID
+      session.user.registrationCompleted =
+        token.registrationCompleted as boolean;
 
       return session;
     },
