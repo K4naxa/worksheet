@@ -8,55 +8,70 @@ import {
   WorkDaysList,
   SettingsModal,
 } from "@/components";
-import { WorkDay, WorkStats, WorkPracticeSettings } from "@/types";
+import { Workday, WorkStats, WorkPracticeSettings } from "@/types";
 import {
-  getWorkDays,
-  saveWorkDay,
-  deleteWorkDay,
-  getWorkPracticeSettings,
+  saveWorkday,
+  deleteWorkday,
   saveWorkPracticeSettings,
 } from "@/utils/storage";
 import { calculateStats } from "@/utils/stats";
 import { BarChart3, CalendarDays, Plus, Settings, List } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useUser } from "@/context/UserContext";
 
 export default function Home() {
-  const [workDays, setWorkDays] = useState<WorkDay[]>([]);
+  // Pull the true user data from context
+  const { userProfile, refetchProfile, isLoading } = useUser();
+  const workdays = userProfile?.userWorkdays || [];
+
+  // Initialize stats with default values
+  // This will be updated once the user profile is fetched
   const [stats, setStats] = useState<WorkStats>({
     totalDays: 0,
     totalHours: 0,
     practiceProgress: 0,
     mealDistribution: { school: 0, workplace: 0, other: 0 },
   });
-  const [settings, setSettings] = useState<WorkPracticeSettings>({
-    workDays: [1, 2, 3, 4, 5],
+
+  const settings = {
+    workDays: userProfile?.workdays || [],
+  };
+
+  // Local state for modal and settings
+  // This state is used to control the visibility of the modal and its data
+  const [modalData, setModalData] = useState<{
+    isOpen: boolean;
+    selectedDate: string;
+    existingWorkday?: Workday;
+  }>({
+    isOpen: false,
+    selectedDate: "",
+    existingWorkday: undefined,
   });
-  const [selectedDate, setSelectedDate] = useState<string>("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendar" | "workdays" | "stats">(
     "calendar"
   );
-  const [editingWorkDay, setEditingWorkDay] = useState<WorkDay | undefined>();
 
   useEffect(() => {
-    const savedWorkDays = getWorkDays();
-    const savedSettings = getWorkPracticeSettings();
-    setWorkDays(savedWorkDays);
-    setSettings(savedSettings);
-    setStats(calculateStats(savedWorkDays, savedSettings));
-  }, []);
+    setStats(calculateStats(workdays, settings));
+    console.log("User data:", userProfile);
+  }, [userProfile]);
 
-  const handleSaveWorkDay = async (workDay: WorkDay) => {
+  const handleSaveWorkday = async (workday: Workday) => {
     try {
       // Save the work day to server
-      await saveWorkDay(workDay);
+      await saveWorkday(workday);
 
-      // pull the updated work days from server
-      const updatedWorkDays = await getWorkDays();
-      setWorkDays(updatedWorkDays);
-      setStats(calculateStats(updatedWorkDays, settings));
-      setEditingWorkDay(undefined);
+      // after Succesful save, update user profile
+      await refetchProfile();
+
+      setModalData({
+        selectedDate: "",
+        existingWorkday: undefined,
+        isOpen: false,
+      });
     } catch (error) {
       console.error("Error saving work day:", error);
       alert("Työpäivän tallentaminen epäonnistui. Yritä uudelleen.");
@@ -64,36 +79,52 @@ export default function Home() {
     }
   };
 
-  const handleDeleteWorkDay = async (date: string) => {
+  const handleDeleteWorkday = async (date: string) => {
     if (window.confirm("Haluatko varmasti poistaa tämän työpäivän?")) {
-      await deleteWorkDay(date);
-      const updatedWorkDays = await getWorkDays();
-      setWorkDays(updatedWorkDays);
-      setStats(calculateStats(updatedWorkDays, settings));
-      if (selectedDate === date) {
-        setSelectedDate("");
-        setActiveTab("calendar");
-      }
+      await deleteWorkday(date);
+
+      // after Succesful delete, update user profile
+      await refetchProfile();
+
+      setModalData({
+        ...modalData,
+        selectedDate: "",
+        existingWorkday: undefined,
+        isOpen: false,
+      });
     }
   };
 
   const handleDateSelect = (date: string) => {
-    setSelectedDate(date);
-    const existingWorkDay = workDays.find((day) => day.date === date);
-    setEditingWorkDay(existingWorkDay);
-    setIsModalOpen(true);
+    const formattedDate = new Date(date).toISOString().split("T")[0];
+    const existingWorkday = workdays.find(
+      (day) => new Date(day.date).toISOString().split("T")[0] === formattedDate
+    );
+
+    setModalData({
+      isOpen: true,
+      selectedDate: formattedDate,
+      existingWorkday,
+    });
+    console.log("existing workday:", existingWorkday);
+    console.log("Selected date:", formattedDate);
   };
 
-  const handleEditWorkDay = (workDay: WorkDay) => {
-    setSelectedDate(workDay.date);
-    setEditingWorkDay(workDay);
-    setIsModalOpen(true);
+  const handleEditWorkday = (workday: Workday) => {
+    const formattedDate = new Date(workday.date).toISOString().split("T")[0];
+
+    console.log("Selected date:", formattedDate);
+    console.log("existing workday:", workday);
+    setModalData({
+      isOpen: true,
+      selectedDate: formattedDate,
+      existingWorkday: workday,
+    });
   };
 
   const handleSaveSettings = (newSettings: WorkPracticeSettings) => {
     saveWorkPracticeSettings(newSettings);
-    setSettings(newSettings);
-    setStats(calculateStats(workDays, newSettings));
+    setStats(calculateStats(workdays, newSettings));
   };
 
   const tabs = [
@@ -134,6 +165,8 @@ export default function Home() {
             Seuraa päivittäisiä aktiviteettejasi, oppimistasi ja edistymistäsi
             työharjoittelun aikana
           </p>
+
+          <p>Tämän hetkisten työpäivien määrä: {workdays.length}</p>
         </div>
 
         {/* Navigation Tabs */}
@@ -170,17 +203,25 @@ export default function Home() {
             <div className="grid lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <Calendar
-                  workDays={workDays}
+                  workDays={workdays}
                   onDateSelect={handleDateSelect}
-                  selectedDate={selectedDate}
+                  selectedDate={modalData.selectedDate}
                 />
               </div>
               <div className="space-y-6">
                 <button
                   onClick={() => {
-                    setSelectedDate(new Date().toISOString().split("T")[0]);
-                    setEditingWorkDay(undefined);
-                    setIsModalOpen(true);
+                    const todayDate = new Date().toISOString().split("T")[0];
+                    const existingWorkday = workdays.find(
+                      (day) =>
+                        new Date(day.date).toISOString().split("T")[0] ===
+                        todayDate
+                    );
+                    setModalData({
+                      isOpen: true,
+                      selectedDate: todayDate,
+                      existingWorkday,
+                    });
                   }}
                   className="w-full p-4 btn-primary flex items-center justify-center space-x-2"
                 >
@@ -209,9 +250,9 @@ export default function Home() {
           {activeTab === "workdays" && (
             <div className="max-w-4xl mx-auto">
               <WorkDaysList
-                workDays={workDays}
-                onEdit={handleEditWorkDay}
-                onDelete={handleDeleteWorkDay}
+                workDays={workdays}
+                onEdit={handleEditWorkday}
+                onDelete={handleDeleteWorkday}
               />
             </div>
           )}
@@ -221,14 +262,15 @@ export default function Home() {
 
         {/* Work Day Modal */}
         <WorkDayModal
-          isOpen={isModalOpen}
+          modalData={modalData}
           onClose={() => {
-            setIsModalOpen(false);
-            setEditingWorkDay(undefined);
+            setModalData({
+              isOpen: false,
+              selectedDate: "",
+              existingWorkday: undefined,
+            });
           }}
-          onSave={handleSaveWorkDay}
-          selectedDate={selectedDate}
-          existingWorkDay={editingWorkDay}
+          onSave={handleSaveWorkday}
         />
 
         {/* Settings Modal */}

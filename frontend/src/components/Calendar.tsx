@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { WorkDay } from "@/types";
+import { Workday } from "@/types";
 
 interface CalendarProps {
-  workDays: WorkDay[];
+  workDays: Workday[];
   onDateSelect: (date: string) => void;
   selectedDate?: string;
 }
@@ -44,7 +44,9 @@ export const Calendar: React.FC<CalendarProps> = ({
     1
   ).getDay();
 
-  const workDayDates = new Set(workDays.map((day) => day.date));
+  const workDayDates = new Set(
+    workDays.map((day) => new Date(day.date).toISOString().split("T")[0])
+  );
 
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentDate((prev) => {

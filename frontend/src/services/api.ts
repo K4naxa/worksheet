@@ -33,14 +33,17 @@ export const completeRegistration = async (data: RegistrationComplition) => {
 };
 
 // Get the current users profile including workdays
-export const getProfile = (): Promise<User> => {
+export const getProfile = async (): Promise<User> => {
   console.log("👤 Fetching profile via Next.js API proxy");
-  return nextApiClient.get("/api/profile");
+
+  const response = await nextApiClient.get("/api/profile");
+  return response.data;
 };
 
-export const getWorkDaysFromServer = () => {
+export const getWorkDaysFromServer = async () => {
   console.log("📅 Fetching work days via Next.js API proxy");
-  return nextApiClient.get("/api/workday").then((response) => response.data);
+  const response = await nextApiClient.get("/api/workday");
+  return response.data;
 };
 
 export const saveWorkDayToServer = (workDay: any) => {

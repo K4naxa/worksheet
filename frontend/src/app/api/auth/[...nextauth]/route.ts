@@ -129,6 +129,7 @@ export const authOptions: AuthOptions = {
       session.user.id = token.sub as string; // Use sub as user ID
       session.user.registrationCompleted =
         token.registrationCompleted as boolean;
+      session.error = token.error as string; // Pass any error from the JWT to the session
 
       return session;
     },

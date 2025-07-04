@@ -15,12 +15,14 @@ import {
 import { CreateWorkDay, Workday } from "@/types";
 
 interface WorkDayModalProps {
-  isOpen: boolean;
+  modalData: {
+    isOpen: boolean;
+    selectedDate: string;
+    existingWorkday?: Workday;
+  };
   onClose: () => void;
   // onSave now returns a Promise, allowing us to await its completion.
   onSave: (workDayDto: CreateWorkDay) => Promise<void>;
-  selectedDate: string;
-  existingWorkDay?: Workday;
 }
 
 // Correct meal location options to match Prisma Enum
@@ -35,11 +37,9 @@ const MEAL_LOCATION_OPTIONS: {
 ];
 
 export const WorkDayModal: React.FC<WorkDayModalProps> = ({
-  isOpen,
+  modalData: { isOpen, selectedDate, existingWorkday },
   onClose,
   onSave,
-  selectedDate,
-  existingWorkDay,
 }) => {
   // State for form fields
   const [activities, setActivities] = useState("");
@@ -61,16 +61,25 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
       // Reset states on open
       setError(null);
       setIsLoading(false);
+      console.log("Modal opened for date:", selectedDate);
+      console.log("Existing work day:", existingWorkday);
 
-      if (existingWorkDay) {
+      console.log(
+        "Modal is open. Checking for existing workday:",
+        existingWorkday
+      );
+
+      if (existingWorkday) {
+        console.log("Existing work day found:", existingWorkday);
         // Populate form with existing data and enter read-only mode
-        setActivities(existingWorkDay.activities);
-        setLearnings(existingWorkDay.learnings);
-        setHours(existingWorkDay.hours);
-        setMealLocation(existingWorkDay.mealLocation);
-        setMealLocationOther(existingWorkDay.mealLocationOther || "");
+        setActivities(existingWorkday.activities);
+        setLearnings(existingWorkday.learnings);
+        setHours(existingWorkday.hours);
+        setMealLocation(existingWorkday.mealLocation);
+        setMealLocationOther(existingWorkday.mealLocationOther || "");
         setIsEditing(false); // Start in view mode
       } else {
+        console.log("No existing workday. Resetting form for new entry.");
         // Reset form for a new entry and enter edit mode immediately
         setActivities("");
         setLearnings("");
@@ -80,7 +89,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
         setIsEditing(true); // New entry is always in edit mode
       }
     }
-  }, [existingWorkDay, isOpen]);
+  }, [isOpen, existingWorkday, selectedDate]);
 
   const handleSave = async () => {
     // Basic client-side validation
@@ -138,12 +147,12 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-white/20 flex-shrink-0">
           <div>
             <h2 className="text-xl font-bold text-primary">
-              {existingWorkDay ? "Työpäivän tiedot" : "Lisää uusi työpäivä"}
+              {existingWorkday ? "Työpäivän tiedot" : "Lisää uusi työpäivä"}
             </h2>
             <p className="text-muted text-sm">{formatDate(selectedDate)}</p>
           </div>
           {/* Show Edit button only if viewing an existing day and not already editing */}
-          {existingWorkDay && !isEditing && (
+          {existingWorkday && !isEditing && (
             <button
               onClick={() => setIsEditing(true)}
               className="btn-secondary flex items-center space-x-2"

@@ -39,11 +39,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // This helps prevent the double-fetch in React Strict Mode.
-    if (isLoading || userProfile) {
-      return;
-    }
-
     setIsLoading(true);
     try {
       console.log("Fetching user profile from backend...");

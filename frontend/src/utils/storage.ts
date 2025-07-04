@@ -1,10 +1,10 @@
 import { saveWorkDayToServer } from "@/services/api";
-import { CreateWorkDay, WorkDay, WorkPracticeSettings } from "@/types";
+import { CreateWorkDay, Workday, WorkPracticeSettings } from "@/types";
 
 const STORAGE_KEY = "work-practice-data";
 const SETTINGS_KEY = "work-practice-settings";
 
-export const getWorkDays = (): WorkDay[] => {
+export const getWorkDays = (): Workday[] => {
   if (typeof window === "undefined") return [];
 
   try {
@@ -16,50 +16,31 @@ export const getWorkDays = (): WorkDay[] => {
   }
 };
 
-export const saveWorkDay = (workDay: CreateWorkDay): void => {
+export const saveWorkday = (workday: Workday): void => {
   if (typeof window === "undefined") return;
 
   try {
     // attempt to save the work day in db
-    saveWorkDayToServer(workDay)
+    saveWorkDayToServer(workday)
       .then(() => {
-        console.log("Work day saved successfully:", workDay);
+        console.log("Work day saved successfully:", workday);
       })
       .catch((error) => {
         console.error("Error saving work day to server:", error);
       });
-
-    // const workDays = getWorkDays();
-    // const existingIndex = workDays.findIndex(
-    //   (day) => day.date === workDay.date
-    // );
-
-    // if (existingIndex >= 0) {
-    //   workDays[existingIndex] = {
-    //     ...workDay,
-    //     updatedAt: new Date().toISOString(),
-    //   };
-    // } else {
-    //   workDays.push(workDay);
-    // }
-
-    // workDays.sort(
-    //   (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    // );
-    // localStorage.setItem(STORAGE_KEY, JSON.stringify(workDays));
   } catch (error) {
     console.error("Error saving work day:", error);
   }
 };
 
-export const deleteWorkDay = (date: string): void => {
+export const deleteWorkday = (date: string): void => {
   if (typeof window === "undefined") return;
 
   try {
-    const workDays = getWorkDays().filter((day) => day.date !== date);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(workDays));
+    const workdays = getWorkdays().filter((day) => day.date !== date);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(workdays));
   } catch (error) {
-    console.error("Error deleting work day:", error);
+    console.error("Error deleting workday:", error);
   }
 };
 
