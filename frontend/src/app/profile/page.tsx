@@ -18,10 +18,15 @@ import { completeRegistration, deleteProfile } from "@/services/api";
 import { RegistrationComplition } from "@/types";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { ProfilePageSkeleton } from "@/components/skeletons/ProfilePageSkeleton";
 
 export default function Home() {
   const { data: session, update } = useSession();
-  const { userProfile, refetchProfile } = useUser();
+  const {
+    userProfile,
+    refetchProfile,
+    isLoading: isProfileLoading,
+  } = useUser();
   const router = useRouter();
 
   // ** Work Settings States **//
@@ -191,6 +196,14 @@ export default function Home() {
       return () => clearTimeout(timer); // Cleanup timer on unmount
     }
   }, [error]);
+
+  // ** Loading skeleton **//
+  // If the context is loading the initial profile, or if the profile hasn't arrived yet,
+  // show the skeleton UI.
+  // MUST BE CALLED AFTER ALL OF THE HOOKS TO SATISFY REACT HOOKS RULES
+  if (isProfileLoading || !userProfile) {
+    return <ProfilePageSkeleton />;
+  }
 
   return (
     <div className=" flex flex-col gap-12 items-center justify-center p-4 h-full">

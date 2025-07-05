@@ -69,6 +69,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   // It runs whenever the authentication status changes.
   useEffect(() => {
     if (status === "loading") {
+      // If the session is still loading, we set loading state to true
+      setIsLoading(true);
       // Session is still being determined, do nothing yet.
       return;
     }
@@ -76,12 +78,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (status === "unauthenticated") {
       // If the user is not authenticated, clear the profile
       setUserProfile(null);
+      setIsLoading(false);
       return;
     }
 
     if (session?.error === "RefreshAccessTokenError") {
       console.error("Refresh token failed, signing out.");
       signOut();
+      setIsLoading(false);
+      return;
     }
 
     fetchProfile();

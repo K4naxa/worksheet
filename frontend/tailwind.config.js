@@ -45,6 +45,11 @@ module.exports = {
           900: "#064e3b",
         },
       },
+      keyframes: {
+        shimmer: {
+          transform: "translateX(100%)",
+        },
+      },
     },
   },
   plugins: [],

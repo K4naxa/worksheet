@@ -12,6 +12,7 @@ import { saveWorkday, deleteWorkday } from "@/utils/storage";
 import { calculateStats } from "@/utils/stats";
 import { BarChart3, CalendarDays, Plus, Settings, List } from "lucide-react";
 import { useUser } from "@/context/UserContext";
+import { HomePageSkeleton } from "@/components/skeletons/HomePageSkeleton";
 
 export default function Home() {
   // Pull the true user data from context
@@ -48,6 +49,22 @@ export default function Home() {
     selectedDate: "",
     existingWorkday: undefined,
   });
+  const [activeTab, setActiveTab] = useState<"calendar" | "workdays" | "stats">(
+    "calendar"
+  );
+
+  useEffect(() => {
+    setStats(calculateStats(workdays, settings));
+    console.log("User data:", userProfile);
+  }, [userProfile]);
+
+  // ** Loading skeleton **//
+  // If the context is loading the initial profile, or if the profile hasn't arrived yet,
+  // show the skeleton UI.
+  // MUST BE CALLED AFTER ALL OF THE HOOKS TO SATISFY REACT HOOKS RULES
+  if (isLoading || !userProfile) {
+    return <HomePageSkeleton />;
+  }
 
   const openModal = (date: string, workday?: Workday) => {
     setModalData({
@@ -64,15 +81,6 @@ export default function Home() {
       existingWorkday: undefined,
     });
   };
-
-  const [activeTab, setActiveTab] = useState<"calendar" | "workdays" | "stats">(
-    "calendar"
-  );
-
-  useEffect(() => {
-    setStats(calculateStats(workdays, settings));
-    console.log("User data:", userProfile);
-  }, [userProfile]);
 
   const handleSaveWorkday = async (workday: any) => {
     try {
