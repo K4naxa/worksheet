@@ -2,6 +2,7 @@ import "./globals.css";
 import "./manifest.js";
 import AuthProvider from "../context/AuthContext";
 import { UserProvider } from "@/context/UserContext";
+import { ConditionalLayout } from "@/components";
 
 export default function RootLayout({
   children,
@@ -10,9 +11,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fi">
-      <body>
+      <body
+        style={{ background: "var(--gradient-background)" }}
+        className="min-h-screen"
+      >
         <AuthProvider>
-          <UserProvider>{children}</UserProvider>
+          <UserProvider>
+            <ConditionalLayout>{children}</ConditionalLayout>
+          </UserProvider>
         </AuthProvider>
       </body>
     </html>

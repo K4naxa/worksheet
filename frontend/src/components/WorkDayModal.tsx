@@ -91,6 +91,37 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
     }
   }, [isOpen, existingWorkday, selectedDate]);
 
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (isOpen) {
+        onClose(); // Close modal on back button
+      }
+    };
+    if (isOpen) {
+      // Add a class to body to prevent scrolling when modal is open
+      document.body.classList.add("overflow-hidden");
+
+      // add event listener to handle back button or history state changes
+      history.pushState({ modalOpen: false }, "", "");
+      history.pushState({ modalOpen: true }, "", "");
+
+      // Attach the event listener
+      window.addEventListener("popstate", handlePopState);
+    } else {
+      // Remove the class when modal is closed
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    return () => {
+      // Cleanup: remove the class when component unmounts or modal closes
+      // This ensures no leftover styles if modal is closed programmatically
+      document.body.classList.remove("overflow-hidden");
+
+      // Remove the event listener to prevent memory leaks
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isOpen]);
+
   const handleSave = async () => {
     // Basic client-side validation
     if (!activities.trim() || !learnings.trim() || hours <= 0) {
@@ -141,7 +172,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 ">
       <div className="glass-card  rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 p-6 border-b border-white/20 flex-shrink-0">
@@ -319,53 +350,54 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                 </div>
               ))}
           </div>
+
+          {(isEditing || error) && (
+            <div className="p-6 border-t border-white/20 flex-shrink-0">
+              {error && (
+                <div className="mb-4 flex items-center p-3 rounded-lg bg-red-500/20 text-red-400">
+                  <AlertCircle className="w-5 h-5 mr-3" />
+                  <span>{error}</span>
+                </div>
+              )}
+              {/* Only show action buttons if in editing mode */}
+              {isEditing && (
+                <div className="flex items-center justify-end space-x-3">
+                  <button
+                    onClick={onClose}
+                    className="btn-secondary"
+                    disabled={isLoading}
+                  >
+                    Peruuta
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={
+                      !activities.trim() ||
+                      !learnings.trim() ||
+                      hours <= 0 ||
+                      isLoading
+                    }
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Tallennetaan...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>Tallenna</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer with Error Display and Action Buttons */}
-        {(isEditing || error) && (
-          <div className="p-6 border-t border-white/20 flex-shrink-0">
-            {error && (
-              <div className="mb-4 flex items-center p-3 rounded-lg bg-red-500/20 text-red-400">
-                <AlertCircle className="w-5 h-5 mr-3" />
-                <span>{error}</span>
-              </div>
-            )}
-            {/* Only show action buttons if in editing mode */}
-            {isEditing && (
-              <div className="flex items-center justify-end space-x-3">
-                <button
-                  onClick={onClose}
-                  className="btn-secondary"
-                  disabled={isLoading}
-                >
-                  Peruuta
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={
-                    !activities.trim() ||
-                    !learnings.trim() ||
-                    hours <= 0 ||
-                    isLoading
-                  }
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Tallennetaan...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      <span>Tallenna</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

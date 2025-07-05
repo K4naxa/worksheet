@@ -80,7 +80,9 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-muted" />
                   <h3 className="font-semibold text-primary">
-                    {formatDate(workDay.date)}
+                    {formatDate(
+                      new Date(workDay.date).toISOString().split("T")[0]
+                    )}
                   </h3>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -92,7 +94,11 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({
                     <Edit className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => onDelete(workDay.date)}
+                    onClick={() =>
+                      onDelete(
+                        new Date(workDay.date).toISOString().split("T")[0]
+                      )
+                    }
                     className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors"
                     title="Poista työpäivä"
                   >
@@ -132,7 +138,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-orange-400" />
                     <span className="text-sm text-secondary">
-                      {workDay.hoursWorked}h
+                      {workDay.hours}h
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -143,7 +149,8 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({
                   </div>
                 </div>
                 <div className="text-xs text-muted">
-                  {new Date(workDay.updatedAt).toLocaleDateString("fi-FI")}
+                  {workDay.updatedAt &&
+                    new Date(workDay.updatedAt).toLocaleDateString("fi-FI")}
                 </div>
               </div>
             </div>

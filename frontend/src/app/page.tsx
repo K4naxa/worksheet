@@ -16,7 +16,6 @@ import {
 } from "@/utils/storage";
 import { calculateStats } from "@/utils/stats";
 import { BarChart3, CalendarDays, Plus, Settings, List } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 
 export default function Home() {
@@ -33,8 +32,14 @@ export default function Home() {
     mealDistribution: { school: 0, work: 0, other: 0 },
   });
 
-  const settings = {
+  const settings: WorkPracticeSettings = {
     workDays: userProfile?.workdays || [],
+    startDate: userProfile?.start_date
+      ? new Date(userProfile.start_date).toISOString().split("T")[0]
+      : undefined,
+    endDate: userProfile?.end_date
+      ? new Date(userProfile.end_date).toISOString().split("T")[0]
+      : undefined,
   };
 
   // Local state for modal and settings
@@ -48,6 +53,22 @@ export default function Home() {
     selectedDate: "",
     existingWorkday: undefined,
   });
+
+  const openModal = (date: string, workday?: Workday) => {
+    setModalData({
+      isOpen: true,
+      selectedDate: date,
+      existingWorkday: workday,
+    });
+  };
+
+  const closeModal = () => {
+    setModalData({
+      isOpen: false,
+      selectedDate: "",
+      existingWorkday: undefined,
+    });
+  };
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendar" | "workdays" | "stats">(
@@ -67,11 +88,7 @@ export default function Home() {
       // after Succesful save, update user profile
       await refetchProfile();
 
-      setModalData({
-        selectedDate: "",
-        existingWorkday: undefined,
-        isOpen: false,
-      });
+      closeModal();
     } catch (error) {
       console.error("Error saving work day:", error);
       alert("Työpäivän tallentaminen epäonnistui. Yritä uudelleen.");
@@ -86,12 +103,7 @@ export default function Home() {
       // after Succesful delete, update user profile
       await refetchProfile();
 
-      setModalData({
-        ...modalData,
-        selectedDate: "",
-        existingWorkday: undefined,
-        isOpen: false,
-      });
+      closeModal();
     }
   };
 
@@ -101,11 +113,7 @@ export default function Home() {
       (day) => new Date(day.date).toISOString().split("T")[0] === formattedDate
     );
 
-    setModalData({
-      isOpen: true,
-      selectedDate: formattedDate,
-      existingWorkday,
-    });
+    openModal(formattedDate, existingWorkday);
     console.log("existing workday:", existingWorkday);
     console.log("Selected date:", formattedDate);
   };
@@ -115,11 +123,8 @@ export default function Home() {
 
     console.log("Selected date:", formattedDate);
     console.log("existing workday:", workday);
-    setModalData({
-      isOpen: true,
-      selectedDate: formattedDate,
-      existingWorkday: workday,
-    });
+
+    openModal(formattedDate, workday);
   };
 
   const handleSaveSettings = (newSettings: WorkPracticeSettings) => {
@@ -134,17 +139,43 @@ export default function Home() {
   ];
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "var(--gradient-background)" }}
-    >
+    <div className="pt-4">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-primary">
-              Työharjoittelu Seuranta
-            </h1>
+          <p className="text-secondary text-lg max-w-2xl mx-auto">
+            Seuraa päivittäisiä aktiviteettejasi, oppimistasi ja edistymistäsi
+            työharjoittelun aikana
+          </p>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center space-x-4">
+            <div className="glass-card rounded-2xl p-2">
+              <div className="flex space-x-2">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`
+                        flex items-center space-x-1 md:space-x-2 px-4 md:px-6 py-3 rounded-xl font-medium transition-all
+                        ${
+                          activeTab === tab.id
+                            ? "text-white shadow-lg bg-gradient-primary"
+                            : "text-secondary glass-card-hover "
+                        }
+                      `}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <button
               onClick={() => setIsSettingsOpen(true)}
               className="p-3 rounded-xl glass-card glass-card-hover text-primary transition-colors"
@@ -152,48 +183,6 @@ export default function Home() {
             >
               <Settings className="w-6 h-6" />
             </button>
-            <button
-              className="p-3 rounded-xl glass-card glass-card-hover text-primary transition-colors"
-              onClick={() => {
-                signOut();
-              }}
-            >
-              Kirjaudu ulos
-            </button>
-          </div>
-          <p className="text-secondary text-lg max-w-2xl mx-auto">
-            Seuraa päivittäisiä aktiviteettejasi, oppimistasi ja edistymistäsi
-            työharjoittelun aikana
-          </p>
-
-          <p>Tämän hetkisten työpäivien määrä: {workdays.length}</p>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex justify-center mb-8">
-          <div className="glass-card rounded-2xl p-2">
-            <div className="flex space-x-2">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`
-                      flex items-center space-x-1 md:space-x-2 px-4 md:px-6 py-3 rounded-xl font-medium transition-all
-                      ${
-                        activeTab === tab.id
-                          ? "text-white shadow-lg bg-gradient-primary"
-                          : "text-secondary glass-card-hover "
-                      }
-                    `}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
 
@@ -264,11 +253,7 @@ export default function Home() {
         <WorkDayModal
           modalData={modalData}
           onClose={() => {
-            setModalData({
-              isOpen: false,
-              selectedDate: "",
-              existingWorkday: undefined,
-            });
+            closeModal();
           }}
           onSave={handleSaveWorkday}
         />
