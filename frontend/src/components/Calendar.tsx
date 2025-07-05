@@ -107,7 +107,7 @@ export const Calendar: React.FC<CalendarProps> = ({
 
       days.push(
         <button
-          key={day}
+          key={dateStr}
           onClick={() => onDateSelect(dateStr)}
           onMouseEnter={() => setHoveredDate(dateStr)}
           onMouseLeave={() => setHoveredDate(null)}
