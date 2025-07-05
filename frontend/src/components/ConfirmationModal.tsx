@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, AlertTriangle, Check } from "lucide-react";
+import { X, AlertTriangle, Check, Trash2 } from "lucide-react";
+import { useModalEffects } from "@/hooks/useModalEffect";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -48,35 +49,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   }, [isOpen, isDanger]); // Rerun this effect if isOpen or isDanger changes
 
   // This useEffect handles side effects like body scroll and history
-  useEffect(() => {
-    // This logic should only apply when the modal is open
-    if (!isOpen) {
-      document.body.style.overflow = ""; // Ensure overflow is reset
-      return;
-    }
-
-    // Lock body scroll
-    document.body.style.overflow = "hidden";
-
-    // History management
-    const handlePopState = (event: PopStateEvent) => {
-      onClose(); // Close the modal if the user navigates back
-    };
-
-    history.pushState({ modal: true }, "");
-    window.addEventListener("popstate", handlePopState);
-
-    // Cleanup function
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("popstate", handlePopState);
-      // If the history state is still ours, it means the user closed the modal
-      // with a button, so we go back to clean up the history entry.
-      if (history.state?.modal) {
-        history.back();
-      }
-    };
-  }, [isOpen, onClose]); // Depend on isOpen and the stable onClose function
+  useModalEffects(isOpen, onClose);
 
   const handleConfirm = () => {
     onConfirm();
@@ -104,7 +77,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             {isDanger ? (
               <AlertTriangle className="w-5 h-5 text-red-500" />
             ) : (
-              <Check className="w-5 h-5 text-primary" />
+              <Trash2 className="w-5 h-5 text-primary" />
             )}
             <h2
               className={`text-xl font-bold ${
@@ -117,7 +90,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         </div>
 
         <div className="p-6">
-          <p className="text-primary whitespace-pre-line">{message}</p>
+          <span className="text-primary whitespace-pre-line">{message}</span>
         </div>
 
         <div className="flex items-center justify-end space-x-3 p-6 border-t border-white/20">

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { CreateWorkDay, Workday } from "@/types";
+import { useModalEffects } from "../hooks/useModalEffect";
 
 interface WorkDayModalProps {
   modalData: {
@@ -25,7 +26,7 @@ interface WorkDayModalProps {
   onClose: () => void;
   // onSave now returns a Promise, allowing us to await its completion.
   onSave: (workDayDto: CreateWorkDay) => Promise<void>;
-  onDelete?: (date: string) => Promise<void>;
+  onDeleteRequest?: (date: string) => void;
 }
 
 // Correct meal location options to match Prisma Enum
@@ -43,17 +44,19 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
   modalData: { isOpen, selectedDate, existingWorkday },
   onClose,
   onSave,
-  onDelete,
+  onDeleteRequest,
 }) => {
   // State for form fields
-  const [activities, setActivities] = useState("");
-  const [learnings, setLearnings] = useState("");
-  const [hours, setHours] = useState<number>(8); // Renamed from hoursWorked
-  const [mealLocation, setMealLocation] = useState<"school" | "work" | "other">(
-    existingWorkday?.mealLocation || "work"
-  );
-  const [mealLocationOther, setMealLocationOther] = useState("");
 
+  const [ModalFormData, setModalFormData] = useState<Workday>({
+    id: "",
+    date: selectedDate,
+    activities: "",
+    learnings: "",
+    hours: 8,
+    mealLocation: "work",
+    mealLocationOther: "",
+  });
   // State for modal behavior
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,74 +64,42 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
 
   // Effect to populate form when modal opens or existingWorkDay changes
   useEffect(() => {
-    if (isOpen) {
-      // Reset states on open
-      setError(null);
-      setIsLoading(false);
-      console.log("Modal opened for date:", selectedDate);
-      console.log("Existing work day:", existingWorkday);
+    // This effect synchronizes the modal's internal state with its props.
+    // It's the "source of truth" for what the form should display.
 
-      console.log(
-        "Modal is open. Checking for existing workday:",
-        existingWorkday
-      );
+    console.log("Syncing form state for date:", selectedDate);
 
-      if (existingWorkday) {
-        console.log("Existing work day found:", existingWorkday);
-        // Populate form with existing data and enter read-only mode
-        setActivities(existingWorkday.activities);
-        setLearnings(existingWorkday.learnings);
-        setHours(existingWorkday.hours);
-        setMealLocation(existingWorkday.mealLocation);
-        setMealLocationOther(existingWorkday.mealLocationOther || "");
-        setIsEditing(false); // Start in view mode
-      } else {
-        console.log("No existing workday. Resetting form for new entry.");
-        // Reset form for a new entry and enter edit mode immediately
-        setActivities("");
-        setLearnings("");
-        setHours(8);
-        setMealLocation("work");
-        setMealLocationOther("");
-        setIsEditing(true); // New entry is always in edit mode
-      }
-    }
-  }, [isOpen, existingWorkday, selectedDate]);
+    setError(null);
+    setIsLoading(false);
 
-  useEffect(() => {
-    const handlePopState = (event: PopStateEvent) => {
-      if (isOpen) {
-        onClose(); // Close modal on back button
-      }
-    };
-    if (isOpen) {
-      // Add a class to body to prevent scrolling when modal is open
-      document.body.classList.add("overflow-hidden");
-
-      // add event listener to handle back button or history state changes
-      history.pushState({ modalOpen: false }, "", "");
-      history.pushState({ modalOpen: true }, "", "");
-
-      // Attach the event listener
-      window.addEventListener("popstate", handlePopState);
+    if (existingWorkday) {
+      // We have an existing workday, so populate the form and set to view mode.
+      setModalFormData(existingWorkday);
+      setIsEditing(false);
     } else {
-      // Remove the class when modal is closed
-      document.body.classList.remove("overflow-hidden");
+      // This is a new entry, so reset the form to its default state and set to edit mode.
+      setModalFormData({
+        id: "",
+        date: selectedDate,
+        activities: "",
+        learnings: "",
+        hours: 8,
+        mealLocation: "work",
+        mealLocationOther: "",
+      });
+      setIsEditing(true);
     }
+  }, [existingWorkday, selectedDate]);
 
-    return () => {
-      // Cleanup: remove the class when component unmounts or modal closes
-      // This ensures no leftover styles if modal is closed programmatically
-      document.body.classList.remove("overflow-hidden");
-
-      // Remove the event listener to prevent memory leaks
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [isOpen]);
+  useModalEffects(isOpen, onClose);
 
   const handleSave = async () => {
     // Basic client-side validation
-    if (!activities.trim() || !learnings.trim() || hours <= 0) {
+    if (
+      !ModalFormData.activities.trim() ||
+      !ModalFormData.learnings.trim() ||
+      ModalFormData.hours <= 0
+    ) {
       setError("Täytä kaikki pakolliset kentät.");
       return;
     }
@@ -139,13 +110,13 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
     // Construct the DTO for the API call
     const workDayDto: CreateWorkDay = {
       date: selectedDate,
-      activities: activities.trim(),
-      learnings: learnings.trim(),
-      hours,
-      mealLocation,
+      activities: ModalFormData.activities.trim(),
+      learnings: ModalFormData.learnings.trim(),
+      hours: ModalFormData.hours,
+      mealLocation: ModalFormData.mealLocation,
       // Only include mealLocationOther if mealLocation is 'other'
-      ...(mealLocation === "other" && {
-        mealLocationOther: mealLocationOther.trim(),
+      ...(ModalFormData.mealLocation === "other" && {
+        mealLocationOther: ModalFormData.mealLocationOther.trim(),
       }),
     };
 
@@ -225,8 +196,13 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
             </div>
             {isEditing ? (
               <textarea
-                value={activities}
-                onChange={(e) => setActivities(e.target.value)}
+                value={ModalFormData.activities}
+                onChange={(e) =>
+                  setModalFormData({
+                    ...ModalFormData,
+                    activities: e.target.value,
+                  })
+                }
                 placeholder="Kuvaile päivän pääasialliset aktiviteetit ja tehtävät..."
                 className="input-field resize-none h-24"
                 required
@@ -234,7 +210,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               />
             ) : (
               <div className="p-3 rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none">
-                {activities || (
+                {ModalFormData.activities || (
                   <span className="text-muted-foreground">
                     Ei aktiviteetteja.
                   </span>
@@ -251,8 +227,13 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
             </div>
             {isEditing ? (
               <textarea
-                value={learnings}
-                onChange={(e) => setLearnings(e.target.value)}
+                value={ModalFormData.learnings}
+                onChange={(e) =>
+                  setModalFormData({
+                    ...ModalFormData,
+                    learnings: e.target.value,
+                  })
+                }
                 placeholder="Mitä uusia taitoja, tietoja tai oivalluksia sait?"
                 className="input-field resize-none h-24"
                 required
@@ -260,7 +241,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               />
             ) : (
               <div className="p-3 rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none">
-                {learnings || (
+                {ModalFormData.learnings || (
                   <span className="text-muted-foreground">
                     Ei oppimiskokemuksia.
                   </span>
@@ -278,9 +259,12 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
             {isEditing ? (
               <input
                 type="number"
-                value={hours}
+                value={ModalFormData.hours}
                 onChange={(e) =>
-                  setHours(Math.max(0, parseFloat(e.target.value) || 0))
+                  setModalFormData({
+                    ...ModalFormData,
+                    hours: Math.max(0, parseFloat(e.target.value) || 0),
+                  })
                 }
                 min="0"
                 max="24"
@@ -291,7 +275,9 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               />
             ) : (
               <div className="p-3 rounded-lg bg-white/5 text-secondary">
-                {hours > 0 ? `${hours} tuntia` : "Ei työtunteja."}
+                {ModalFormData.hours > 0
+                  ? `${ModalFormData.hours} tuntia`
+                  : "Ei työtunteja."}
               </div>
             )}
           </div>
@@ -308,9 +294,14 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setMealLocation(option.value)}
+                    onClick={() =>
+                      setModalFormData({
+                        ...ModalFormData,
+                        mealLocation: option.value,
+                      })
+                    }
                     className={`p-3 rounded-xl border-2 transition-all ${
-                      mealLocation === option.value
+                      ModalFormData.mealLocation === option.value
                         ? "border-primary-500 bg-primary-500/20 text-primary"
                         : "border-white/20 glass-card text-secondary glass-card-hover"
                     } `}
@@ -323,9 +314,14 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setMealLocation(option.value)}
+                    onClick={() =>
+                      setModalFormData({
+                        ...ModalFormData,
+                        mealLocation: option.value,
+                      })
+                    }
                     className={`p-3 rounded-xl border-2 transition-all ${
-                      mealLocation === option.value
+                      ModalFormData.mealLocation === option.value
                         ? "border-primary-500 bg-primary-500/20 text-primary"
                         : " border-transparent bg-white/5 text-secondary"
                     } `}
@@ -338,19 +334,24 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               )}
             </div>
 
-            {mealLocation === "other" &&
+            {ModalFormData.mealLocation === "other" &&
               (isEditing ? (
                 <input
                   type="text"
-                  value={mealLocationOther}
-                  onChange={(e) => setMealLocationOther(e.target.value)}
+                  value={ModalFormData.mealLocationOther}
+                  onChange={(e) =>
+                    setModalFormData({
+                      ...ModalFormData,
+                      mealLocationOther: e.target.value,
+                    })
+                  }
                   placeholder="Määritä missä..."
                   className="input-field"
                   disabled={isFormDisabled}
                 />
               ) : (
                 <div className="p-3 rounded-lg bg-white/5 text-secondary">
-                  {mealLocationOther || "Ei määritelty."}
+                  {ModalFormData.mealLocationOther || "Ei määritelty."}
                 </div>
               ))}
           </div>
@@ -366,9 +367,9 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               {/* Only show action buttons if in editing mode */}
               {isEditing && (
                 <div className="flex items-center justify-between gap-4 flex-wrap">
-                  {existingWorkday && onDelete && (
+                  {existingWorkday && onDeleteRequest && (
                     <button
-                      onClick={() => onDelete(selectedDate)}
+                      onClick={() => onDeleteRequest(selectedDate)}
                       className="btn-danger rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors p-2.5"
                       disabled={isLoading}
                     >
@@ -386,9 +387,9 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                     <button
                       onClick={handleSave}
                       disabled={
-                        !activities.trim() ||
-                        !learnings.trim() ||
-                        hours <= 0 ||
+                        !ModalFormData.activities.trim() ||
+                        !ModalFormData.learnings.trim() ||
+                        ModalFormData.hours <= 0 ||
                         isLoading
                       }
                       className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center "
@@ -411,8 +412,6 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
             </div>
           )}
         </div>
-
-        {/* Footer with Error Display and Action Buttons */}
       </div>
     </div>
   );

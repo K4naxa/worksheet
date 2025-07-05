@@ -40,7 +40,7 @@ export interface User {
 
 export interface Workday {
   id: string;
-  date: Date;
+  date: string | Date;
   activities: string;
   learnings: string;
   mealLocation: "school" | "work" | "other"; // Enum type for meal location

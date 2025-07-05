@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Calendar, Statistics, WorkDayModal, WorkDaysList } from "@/components";
+import { useState, useEffect, useCallback } from "react";
 import {
-  Workday,
-  WorkStats,
-  WorkPracticeSettings,
-  CreateWorkDay,
-} from "@/types";
+  Calendar,
+  ConfirmationModal,
+  Statistics,
+  WorkDayModal,
+  WorkDaysList,
+} from "@/components";
+import { Workday, WorkStats, WorkPracticeSettings } from "@/types";
 import { saveWorkday, deleteWorkday } from "@/utils/storage";
 import { calculateStats } from "@/utils/stats";
 import { BarChart3, CalendarDays, Plus, Settings, List } from "lucide-react";
@@ -40,6 +41,9 @@ export default function Home() {
 
   // Local state for modal and settings
   // This state is used to control the visibility of the modal and its data
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [dateToDelete, setDateToDelete] = useState<string | null>(null);
+
   const [modalData, setModalData] = useState<{
     isOpen: boolean;
     selectedDate: string;
@@ -58,6 +62,37 @@ export default function Home() {
     console.log("User data:", userProfile);
   }, [userProfile]);
 
+  useEffect(() => {
+    // If either the main modal OR the confirmation modal is open, lock the scroll.
+    if (modalData.isOpen || showDeleteConfirmation) {
+      document.body.style.overflow = "hidden";
+    } else {
+      // Only unlock if BOTH are closed.
+      document.body.style.overflow = "";
+    }
+
+    // Cleanup function in case the component unmounts while a modal is open.
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [modalData.isOpen, showDeleteConfirmation]);
+
+  const openModal = useCallback((date: string, workday?: Workday) => {
+    setModalData({
+      isOpen: true,
+      selectedDate: date,
+      existingWorkday: workday,
+    });
+  }, []); // Empty dependency array means this function is created only once.
+
+  const closeModal = useCallback(() => {
+    setModalData({
+      isOpen: false,
+      selectedDate: "",
+      existingWorkday: undefined,
+    });
+  }, []); // Empty dependency array means this function is created only once.
+
   // ** Loading skeleton **//
   // If the context is loading the initial profile, or if the profile hasn't arrived yet,
   // show the skeleton UI.
@@ -66,19 +101,12 @@ export default function Home() {
     return <HomePageSkeleton />;
   }
 
-  const openModal = (date: string, workday?: Workday) => {
-    setModalData({
-      isOpen: true,
-      selectedDate: date,
-      existingWorkday: workday,
-    });
-  };
-
-  const closeModal = () => {
-    setModalData({
-      isOpen: false,
-      selectedDate: "",
-      existingWorkday: undefined,
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("fi-FI", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -98,15 +126,28 @@ export default function Home() {
     }
   };
 
-  const handleDeleteWorkday = async (date: string) => {
-    if (window.confirm("Haluatko varmasti poistaa tämän työpäivän?")) {
-      await deleteWorkday(date);
+  const handleDeleteConfirm = async () => {
+    if (!dateToDelete) return; // Safety check
 
-      // after Succesful delete, update user profile
+    try {
+      await deleteWorkday(dateToDelete); // Call your API service
       await refetchProfile();
 
-      closeModal();
+      // Close ALL modals after the operation is successful.
+      setShowDeleteConfirmation(false);
+      closeModal(); // This closes the WorkDayModal
+    } catch (error) {
+      console.error("Error deleting work day:", error);
+      alert("Työpäivän poistaminen epäonnistui.");
+      // You might want to close the confirmation modal even on error.
+      setShowDeleteConfirmation(false);
     }
+  };
+
+  const handleDeleteRequest = (date: string) => {
+    console.log("Request to delete date:", date);
+    setDateToDelete(date); // Store the date we're about to delete
+    setShowDeleteConfirmation(true); // Open the confirmation modal
   };
 
   const handleDateSelect = (date: string) => {
@@ -231,7 +272,7 @@ export default function Home() {
               <WorkDaysList
                 workDays={workdays}
                 onEdit={handleEditWorkday}
-                onDelete={handleDeleteWorkday}
+                onDelete={handleDeleteRequest}
               />
             </div>
           )}
@@ -241,13 +282,34 @@ export default function Home() {
 
         {/* Work Day Modal */}
         <WorkDayModal
-          key={modalData.selectedDate}
           modalData={modalData}
-          onClose={() => {
-            closeModal();
-          }}
+          onClose={closeModal}
           onSave={handleSaveWorkday}
-          onDelete={handleDeleteWorkday}
+          onDeleteRequest={handleDeleteRequest}
+        />
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteConfirmation}
+          onClose={() => setShowDeleteConfirmation(false)}
+          onConfirm={handleDeleteConfirm}
+          message={
+            <div>
+              <p className="text-center text-lg">
+                Oletko varma, että haluat poistaa työpäivän:
+              </p>
+              <p className="text-center font-bold text-primary text-xl my-3 bg-white/10 p-3 rounded-lg">
+                {dateToDelete ? formatDate(dateToDelete) : ""}
+              </p>
+              <p className="text-center text-sm text-muted-foreground">
+                Tätä toimintoa ei voi peruuttaa.
+              </p>
+            </div>
+          }
+          title="Poista työpäivä"
+          confirmText="Poista"
+          cancelText="Peruuta"
+          variant="default"
         />
       </div>
     </div>
