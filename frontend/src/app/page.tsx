@@ -251,6 +251,7 @@ export default function Home() {
 
         {/* Work Day Modal */}
         <WorkDayModal
+          key={modalData.selectedDate}
           modalData={modalData}
           onClose={() => {
             closeModal();

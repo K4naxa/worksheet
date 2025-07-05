@@ -44,6 +44,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       console.log("Fetching user profile from backend...");
       const profileData = await getProfile();
       setUserProfile(profileData);
+      console.log("User profile fetched successfully:", profileData);
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
       setUserProfile(null); // Clear profile on error

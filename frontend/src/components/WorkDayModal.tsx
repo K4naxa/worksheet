@@ -46,7 +46,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
   const [learnings, setLearnings] = useState("");
   const [hours, setHours] = useState<number>(8); // Renamed from hoursWorked
   const [mealLocation, setMealLocation] = useState<"school" | "work" | "other">(
-    "work"
+    existingWorkday?.mealLocation || "work"
   );
   const [mealLocationOther, setMealLocationOther] = useState("");
 
