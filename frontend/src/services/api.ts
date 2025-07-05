@@ -36,8 +36,28 @@ export const completeRegistration = async (data: RegistrationComplition) => {
 export const getProfile = async (): Promise<User> => {
   console.log("👤 Fetching profile via Next.js API proxy");
 
-  const response = await nextApiClient.get("/api/profile");
-  return response.data;
+  try {
+    const response = await nextApiClient.get("/api/profile");
+    return response.data;
+  } catch (error) {
+    // Handle Axios errors properly
+    if (axios.isAxiosError(error)) {
+      console.error(
+        "❌ Error fetching profile:",
+        error.response?.data?.message || error.message,
+        "with status code:",
+        error.response?.status
+      );
+      // Throw a more specific error to be caught by the component
+      throw error;
+    }
+  }
+};
+
+// delete the current users profile
+export const deleteProfile = async (): Promise<void> => {
+  console.log("🗑️ Deleting profile via Next.js API proxy");
+  await nextApiClient.delete("/api/profile");
 };
 
 export const saveWorkDayToServer = (workDay: any) => {

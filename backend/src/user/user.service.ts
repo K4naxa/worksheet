@@ -1,12 +1,16 @@
 // src/user/user.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { KeycloakProfile } from 'src/types/keycloack.types';
 import { User } from '@prisma/client';
+import { KeycloakAdminService } from 'src/keycloak-admin/keycloak-admin.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private keycloakAdminService: KeycloakAdminService,
+  ) {}
 
   async findOrCreateUser(keycloackUser: KeycloakProfile): Promise<User> {
     const { sub, email, name } = keycloackUser;
@@ -107,5 +111,40 @@ export class UserService {
 
     // Return the updated user data
     return updatedUser;
+  }
+
+  // Delete user profile and all associated data
+  // First delete the user profile from Keycloak, then delete the user from Prisma
+  async deleteUser(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      // Just to be sure, check if the user exists in Prisma
+      throw new NotFoundException(
+        `User with ID ${userId} not found in local database.`,
+      );
+    }
+
+    // Delete the user from Keycloak
+    await this.keycloakAdminService.deleteUser(userId);
+
+    // Delete the user from Prisma
+    await this.prisma.$transaction(async (prisma) => {
+      // Delete associated workdays first
+      await prisma.workday.deleteMany({
+        where: { userId: userId },
+      });
+
+      // Now delete the user
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+    });
+
+    console.log(
+      `✅ Successfully deleted user ${userId} and all related data from local database.`,
+    );
   }
 }

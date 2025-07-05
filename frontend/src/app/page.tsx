@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Calendar,
-  Statistics,
-  WorkDayModal,
-  WorkDaysList,
-  SettingsModal,
-} from "@/components";
+import { Calendar, Statistics, WorkDayModal, WorkDaysList } from "@/components";
 import {
   Workday,
   WorkStats,
@@ -71,7 +65,6 @@ export default function Home() {
     });
   };
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendar" | "workdays" | "stats">(
     "calendar"
   );
@@ -172,13 +165,6 @@ export default function Home() {
                 })}
               </div>
             </div>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="p-3 rounded-xl glass-card glass-card-hover text-primary transition-colors"
-              title="Asetukset"
-            >
-              <Settings className="w-6 h-6" />
-            </button>
           </div>
         </div>
 

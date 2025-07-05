@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { getProfile } from "@/services/api";
 
 import { User } from "@/types";
+import axios from "axios";
 
 // Define the shape of the context's value
 interface UserContextType {
@@ -46,6 +47,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setUserProfile(profileData);
       console.log("User profile fetched successfully:", profileData);
     } catch (error) {
+      // Handle 401 and 404 errors specifically
+      // This is important to ensure that if the user is deleted or session is invalid,
+      if (axios.isAxiosError(error)) {
+        // A 401 or 404 on a profile fetch means the user has been deleted
+        // or their session is otherwise invalid. We must sign them out.
+        if (error.response?.status === 401 || error.response?.status === 404) {
+          console.log("Profile not found or unauthorized. Forcing sign out.");
+          signOut({ callbackUrl: "/login" });
+          return; // Stop further execution
+        }
+      }
       console.error("Failed to fetch user profile:", error);
       setUserProfile(null); // Clear profile on error
     } finally {

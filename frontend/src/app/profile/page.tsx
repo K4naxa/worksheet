@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
-import Link from "next/link";
+import { ConfirmationModal } from "@/components";
+import { deleteProfile } from "@/services/api";
 
 export default function Home() {
   const { userProfile, refetchProfile } = useUser();
@@ -19,6 +20,7 @@ export default function Home() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [workdays, setWorkdays] = useState<number[]>([]);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const keycloakAccountUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/account/`;
 
@@ -42,6 +44,27 @@ export default function Home() {
 
   const handleSave = () => {};
 
+  const handleAccountDelete = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmAccountDelete = async () => {
+    try {
+      console.log("Account deletion confirmed, deleting user profile...");
+      // This API call deletes the user from Keycloak and DB.
+      await deleteProfile();
+
+      // error and trigger a global sign-out.
+      await refetchProfile();
+
+      console.log("Profile refetch initiated after deletion.");
+    } catch (error) {
+      // Handle any errors that occur during the deletion process
+      console.error("Error during the account deletion process:", error);
+      alert("Käyttäjän poistaminen epäonnistui.");
+    }
+  };
+
   useEffect(() => {
     if (userProfile) {
       setStartDate(
@@ -59,7 +82,7 @@ export default function Home() {
   }, [userProfile]);
 
   return (
-    <div className=" flex flex-col space-y-12 items-center justify-center p-4 h-full">
+    <div className=" flex flex-col gap-12 items-center justify-center p-4 h-full">
       {/* Work Settings */}
       <div className="glass-card rounded-2xl w-full max-w-6xl">
         <div className="flex items-center justify-between p-6 border-b border-white/20">
@@ -198,12 +221,33 @@ export default function Home() {
           </p>
           <div className="space-y-2">
             {/* Todo: Add link to Keycloak user management */}
-            <button className="px-6 py-3 rounded-xl font-medium transition-all bg-red-500 text-primary hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 hover:shadow ">
+            <button
+              onClick={handleAccountDelete}
+              className="px-6 py-3 rounded-xl font-medium transition-all bg-red-500 text-primary hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 hover:shadow "
+            >
               Poista Käyttäjä
             </button>
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirmation}
+        onClose={() => setShowDeleteConfirmation(false)}
+        onConfirm={confirmAccountDelete}
+        message={
+          <>
+            Oletko varma, että haluat poistaa käyttäjäprofiilisi?
+            <br />
+            <strong>Tätä toimintoa ei voi peruuttaa!</strong>
+          </>
+        }
+        title="Poista käyttäjäprofiili"
+        confirmText="Poista"
+        cancelText="Peruuta"
+        variant="danger"
+      />
     </div>
   );
 }

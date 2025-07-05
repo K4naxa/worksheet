@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post } from '@nestjs/common';
 import { AuthenticatedUser } from 'nest-keycloak-connect';
 import { KeycloakProfile } from 'src/types/keycloack.types';
 import { UserService } from 'src/user/user.service';
@@ -23,5 +23,22 @@ export class UserController {
     @Body() body: any,
   ) {
     return this.userService.completeRegistration(user, body);
+  }
+
+  @Delete('profile')
+  async deleteUserProfile(@AuthenticatedUser() user: KeycloakProfile) {
+    const userId = user.sub;
+    const userEmail = user.email;
+
+    console.log(
+      `Received request to delete profile for user ID: ${userId}, email: ${userEmail}`,
+    );
+
+    await this.userService.deleteUser(userId);
+
+    return {
+      message:
+        'User profile and all associated data have been successfully deleted.',
+    };
   }
 }
