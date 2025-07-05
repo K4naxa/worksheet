@@ -50,8 +50,11 @@ export default function TopNavigation() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Left side - Site name and Export button */}
-          <div className="flex items-center space-x-6">
-            <h1 className="text-xl md:text-2xl font-bold text-primary">
+          <div className="flex items-center space-x-10">
+            <h1
+              className="text-xl md:text-2xl font-bold text-primary hover:cursor-pointer hover:text-primary-200/70 transition-colors"
+              onClick={() => router.push("/")}
+            >
               Työharjoittelu Seuranta
             </h1>
             <button
@@ -77,7 +80,7 @@ export default function TopNavigation() {
 
             {/* Profile dropdown menu */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 glass-card rounded-lg shadow-lg border border-white/10 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-48 glass-card rounded-lg shadow-lg border border-white/10 overflow-hidden z-50">
                 <button
                   onClick={handleProfile}
                   className="w-full px-4 py-3 text-left text-primary hover:bg-white/5 transition-colors flex items-center space-x-2"

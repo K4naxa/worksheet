@@ -1,60 +1,207 @@
 "use client";
 
+import {
+  AlertOctagon,
+  Calendar,
+  LinkIcon,
+  OctagonIcon,
+  Save,
+  Settings,
+  User,
+} from "lucide-react";
 import { useState, useEffect } from "react";
+import { useUser } from "@/context/UserContext";
+import Link from "next/link";
 
 export default function Home() {
+  const { userProfile, refetchProfile } = useUser();
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [workdays, setWorkdays] = useState<number[]>([]);
+
+  const keycloakAccountUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/account/`;
+
+  const weekDays = [
+    { value: 1, label: "Maanantai" },
+    { value: 2, label: "Tiistai" },
+    { value: 3, label: "Keskiviikko" },
+    { value: 4, label: "Torstai" },
+    { value: 5, label: "Perjantai" },
+    { value: 6, label: "Lauantai" },
+    { value: 0, label: "Sunnuntai" },
+  ];
+
+  const handleWorkDayToggle = (dayValue: number) => {
+    setWorkdays((prev) =>
+      prev.includes(dayValue)
+        ? prev.filter((d) => d !== dayValue)
+        : [...prev, dayValue].sort()
+    );
+  };
+
+  const handleSave = () => {};
+
+  useEffect(() => {
+    if (userProfile) {
+      setStartDate(
+        userProfile.start_date
+          ? new Date(userProfile.start_date).toISOString().split("T")[0]
+          : ""
+      );
+      setEndDate(
+        userProfile.end_date
+          ? new Date(userProfile.end_date).toISOString().split("T")[0]
+          : ""
+      );
+      setWorkdays(userProfile.workdays || []);
+    }
+  }, [userProfile]);
+
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "var(--gradient-background)" }}
-    >
-      <div className="container mx-auto px-4 py-8 text-primary-50">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-primary">
-              Työharjoittelu Seuranta
-            </h1>
+    <div className=" flex flex-col space-y-12 items-center justify-center p-4 h-full">
+      {/* Work Settings */}
+      <div className="glass-card rounded-2xl w-full max-w-6xl">
+        <div className="flex items-center justify-between p-6 border-b border-white/20">
+          <div className="flex items-center space-x-2">
+            <Settings className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-bold text-primary">
+              Harjoittelun asetukset
+            </h2>
           </div>
-          <p className="text-secondary text-lg max-w-2xl mx-auto">
-            Seuraa päivittäisiä aktiviteettejasi, oppimistasi ja edistymistäsi
-            työharjoittelun aikana
-          </p>
         </div>
 
-        <div className="flex flex-col items-center  ">
-          <form action="" className="glass-card m-6 rounded-2xl p-12">
-            <h3>Kirjaudu sisään</h3>
+        <div className="p-6 space-y-6">
+          {/* Date Range */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="w-5 h-5 text-muted" />
+              <label className="text-primary font-medium">
+                Harjoittelun ajankohta
+              </label>
+            </div>
 
-            <div className="p-6 space-y-6">
-              {/* Activities */}
-              <div className="">
-                <label htmlFor="email">Sähköposti</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm text-secondary mb-1">
+                  Alkupäivä
+                </label>
                 <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  className="input-field resize-none h-12"
-                  placeholder="Sähköposti"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="input-field"
                 />
               </div>
-
-              {/* Learnings */}
-              <div className="">
-                <label htmlFor="password">Password</label>
+              <div>
+                <label className="block text-sm text-secondary mb-1">
+                  Loppupäivä
+                </label>
                 <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  className="input-field resize-none h-12"
-                  placeholder="Salasana"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="input-field"
                 />
               </div>
             </div>
-            <button type="submit" className="btn-primary">
-              Kirjaudu sisään
+          </div>
+
+          {/* Work Days */}
+          <div className="space-y-3">
+            <label className="text-primary font-medium">
+              Työpäivät viikossa
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {weekDays.map((day) => (
+                <button
+                  key={day.value}
+                  type="button"
+                  onClick={() => handleWorkDayToggle(day.value)}
+                  className={`p-3 rounded-xl border-2 transition-all text-sm ${
+                    workdays.includes(day.value)
+                      ? "border-primary-500 bg-primary-500/20 text-primary"
+                      : "border-white/20 glass-card text-secondary glass-card-hover"
+                  }`}
+                >
+                  {day.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end space-x-3 p-6 border-t border-white/20">
+          <button
+            onClick={handleSave}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Save className="w-4 h-4" />
+            <span>Tallenna</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Profile Info */}
+      <div className="glass-card rounded-2xl w-full max-w-6xl">
+        <div className="flex items-center justify-between p-6 border-b border-white/20">
+          <div className="flex items-center space-x-2">
+            <User className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-bold text-primary">Profiilitiedot</h2>
+          </div>
+        </div>
+
+        {/* Add links to change keycloak credentials */}
+        <div className="p-6 space-y-4">
+          <p className="text-primary ">
+            Yleisten Käyttäjätietojen muokkaus tapahtuu Keycloak välityksellä.{" "}
+            <br />
+            Voit muuttaa esimerkiksi sähköpostiosoitettasi, nimeäsi ja
+            salasanaasi.
+            <br />
+            <br />
+            <strong>
+              Huomioithan, että profiilitietojen muutosten päivittymisessä
+              sivulle on noin 5 minuutin viive.
+            </strong>
+          </p>
+          <div className="space-y-2">
+            {/* --- THE LINK --- */}
+            <a
+              href={keycloakAccountUrl}
+              target="_blank" // Open in a new tab so the user doesn't lose their place
+              rel="noopener noreferrer" // Security best practice for opening new tabs
+              className="btn-primary inline-flex items-center space-x-2" // Use inline-flex for alignment
+            >
+              <span>Siirry Keycloak-profiiliin</span>
+              <LinkIcon className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Deletion */}
+      <div className="glass-card border-2 border-red-500 rounded-2xl w-full max-w-6xl">
+        <div className="flex items-center justify-between p-6 border-b border-red-500/20">
+          <div className="flex items-center space-x-2 text-red-500">
+            <AlertOctagon className="w-5 h-5 " />
+            <h2 className="text-xl font-bold ">Profiilin Poisto</h2>
+          </div>
+        </div>
+
+        {/* Add links to change keycloak credentials */}
+        <div className="p-6 space-y-4">
+          <p className="text-primary ">
+            Alla olevasta painikkeesta voit poistaa käyttäjäprofiilisi. Tämä
+            poistaa myös kaikki siihen liittyvät tiedot, kuten harjoittelun
+            asetukset ja työpäivät.
+          </p>
+          <div className="space-y-2">
+            {/* Todo: Add link to Keycloak user management */}
+            <button className="px-6 py-3 rounded-xl font-medium transition-all bg-red-500 text-primary hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 hover:shadow ">
+              Poista Käyttäjä
             </button>
-          </form>
+          </div>
         </div>
       </div>
     </div>

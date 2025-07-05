@@ -4,4 +4,3 @@ export { WorkDayModal } from "./WorkDayModal";
 export { WorkDaysList } from "./WorkDaysList";
 export { SettingsModal } from "./SettingsModal";
 export { default as TopNavigation } from "./TopNavigation";
-export { default as ConditionalLayout } from "./ConditionalLayout";

@@ -135,8 +135,8 @@ export default function Home() {
   ];
 
   return (
-    <div className="pt-4">
-      <div className="container mx-auto px-4 py-8">
+    <div className="">
+      <div className="container mx-auto p-4">
         {/* Header */}
         <div className="text-center mb-8">
           <p className="text-secondary text-lg max-w-2xl mx-auto">

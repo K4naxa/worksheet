@@ -2,7 +2,7 @@ import "./globals.css";
 import "./manifest.js";
 import AuthProvider from "../context/AuthContext";
 import { UserProvider } from "@/context/UserContext";
-import { ConditionalLayout } from "@/components";
+import ConditionalLayout from "@/Layouts/ConditionalLayout";
 
 export default function RootLayout({
   children,

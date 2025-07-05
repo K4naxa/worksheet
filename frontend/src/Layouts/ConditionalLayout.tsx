@@ -1,5 +1,4 @@
 "use client";
-
 import { usePathname } from "next/navigation";
 import { TopNavigation } from "@/components";
 
@@ -17,9 +16,9 @@ export default function ConditionalLayout({
   const shouldShowNavigation = !excludedPages.includes(pathname);
 
   return (
-    <>
+    <div className="sm:space-y-10">
       {shouldShowNavigation && <TopNavigation />}
       {children}
-    </>
+    </div>
   );
 }
