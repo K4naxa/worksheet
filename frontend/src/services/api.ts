@@ -19,11 +19,11 @@ export const completeRegistration = async (data: RegistrationComplition) => {
     if (axios.isAxiosError(error)) {
       console.error(
         "❌ Error completing registration:",
-        error.response?.data?.message || error.message
+        error.response?.data?.error || error.message
       );
       // Throw a more specific error to be caught by the component
       throw new Error(
-        error.response?.data?.message || "Failed to complete registration"
+        error.response?.data?.error || "Failed to complete registration"
       );
     }
     // Handle other types of errors

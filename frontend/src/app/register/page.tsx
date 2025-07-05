@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Check,
   LogOut,
+  Save,
   User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -56,6 +57,37 @@ export default function Home() {
     workdays: [1, 2, 3, 4, 5],
   });
 
+  const validateAndSubmit = async () => {
+    const { company, instructor, startDate, endDate, workdays } = formData;
+
+    if (!company.trim()) {
+      setError("Yrityksen nimi on pakollinen.");
+      return;
+    }
+    if (!instructor.trim()) {
+      setError("Työn ohjaajan nimi on pakollinen.");
+      return;
+    }
+    if (!startDate) {
+      setError("Aloituspäivä on pakollinen.");
+      return;
+    }
+    if (!endDate) {
+      setError("Viimeinen työpäivä on pakollinen.");
+      return;
+    }
+    if (new Date(startDate) >= new Date(endDate)) {
+      setError("Viimeisen työpäivän on oltava aloituspäivän jälkeen.");
+      return;
+    }
+    if (workdays.length === 0) {
+      setError("Valitse vähintään yksi työpäivä viikossa.");
+      return;
+    }
+
+    await handleSubmit();
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
@@ -75,7 +107,13 @@ export default function Home() {
       router.refresh();
     } catch (err) {
       console.error("Error submitting form:", err);
-      setError("Virhe rekisteröinnissä. Tarkista syötteet ja yritä uudelleen.");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(
+          "Virhe rekisteröinnissä. Tarkista syötteet ja yritä uudelleen."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -117,13 +155,13 @@ export default function Home() {
             </div>
 
             {/* Error message */}
-            <div className="flex justify-center p-4 w-full">
-              {error && (
-                <div className="bg-red-500/20 text-red-500 p-4 rounded-lg mb-4">
-                  {error}
-                </div>
-              )}
-            </div>
+
+            {error && (
+              <div className="bg-red-500/20 text-red-500 p-2 rounded-b-lg">
+                {error}
+              </div>
+            )}
+
             <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
               {/* company Section */}
               <div className="space-y-3">
@@ -145,7 +183,7 @@ export default function Home() {
                 />
               </div>
 
-              {/* Learnings Section */}
+              {/* Instructor Section */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <User className="w-5 h-5 text-muted" />
@@ -165,7 +203,7 @@ export default function Home() {
                 />
               </div>
 
-              {/* Hours Worked Section */}
+              {/* Start date */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-5 h-5 text-muted" />
@@ -179,11 +217,13 @@ export default function Home() {
                   onChange={(e) =>
                     setFormData({ ...formData, startDate: e.target.value })
                   }
+                  max={formData.endDate ? formData.endDate : undefined} // Ensure start date is before end date
                   className="input-field"
                   required
                 />
               </div>
 
+              {/* End date */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-5 h-5 text-muted" />
@@ -197,11 +237,13 @@ export default function Home() {
                   onChange={(e) =>
                     setFormData({ ...formData, endDate: e.target.value })
                   }
+                  min={formData.startDate} // Ensure end date is after start date
                   className="input-field"
                   required
                 />
               </div>
 
+              {/* Workdays Section */}
               <div className="space-y-3">
                 <label className="text-primary font-medium">
                   Työpäivät viikossa
@@ -226,7 +268,7 @@ export default function Home() {
 
               <button
                 onClick={() => {
-                  handleSubmit();
+                  validateAndSubmit();
                 }}
                 disabled={
                   !formData.company ||
@@ -238,7 +280,17 @@ export default function Home() {
                 }
                 className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 mx-auto"
               >
-                <span>Rekisteröidy</span>
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Rekisteröidään...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Rekisteröidy</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
