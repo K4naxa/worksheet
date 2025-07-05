@@ -10,6 +10,8 @@ import {
   Clock,
   Edit,
   AlertCircle,
+  Trash,
+  Trash2,
 } from "lucide-react";
 
 import { CreateWorkDay, Workday } from "@/types";
@@ -23,6 +25,7 @@ interface WorkDayModalProps {
   onClose: () => void;
   // onSave now returns a Promise, allowing us to await its completion.
   onSave: (workDayDto: CreateWorkDay) => Promise<void>;
+  onDelete?: (date: string) => Promise<void>;
 }
 
 // Correct meal location options to match Prisma Enum
@@ -40,6 +43,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
   modalData: { isOpen, selectedDate, existingWorkday },
   onClose,
   onSave,
+  onDelete,
 }) => {
   // State for form fields
   const [activities, setActivities] = useState("");
@@ -361,36 +365,47 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               )}
               {/* Only show action buttons if in editing mode */}
               {isEditing && (
-                <div className="flex items-center justify-end space-x-3">
-                  <button
-                    onClick={onClose}
-                    className="btn-secondary"
-                    disabled={isLoading}
-                  >
-                    Peruuta
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={
-                      !activities.trim() ||
-                      !learnings.trim() ||
-                      hours <= 0 ||
-                      isLoading
-                    }
-                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Tallennetaan...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        <span>Tallenna</span>
-                      </>
-                    )}
-                  </button>
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  {existingWorkday && onDelete && (
+                    <button
+                      onClick={() => onDelete(selectedDate)}
+                      className="btn-danger rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors p-2.5"
+                      disabled={isLoading}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  <div className="flex  gap-4 flex-wrap ml-auto">
+                    <button
+                      onClick={onClose}
+                      className="btn-secondary"
+                      disabled={isLoading}
+                    >
+                      Peruuta
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={
+                        !activities.trim() ||
+                        !learnings.trim() ||
+                        hours <= 0 ||
+                        isLoading
+                      }
+                      className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center "
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Tallennetaan...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>Tallenna</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

@@ -99,7 +99,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({
                         new Date(workDay.date).toISOString().split("T")[0]
                       )
                     }
-                    className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors"
+                    className="p-1.5 btn-danger glass-card rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors"
                     title="Poista työpäivä"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

@@ -1,5 +1,4 @@
 import { Injectable, ConflictException } from '@nestjs/common';
-import { Workday } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateWorkdayDto } from 'src/workday/dto/workday.dto';
 
@@ -7,14 +6,16 @@ import { CreateWorkdayDto } from 'src/workday/dto/workday.dto';
 export class WorkdayService {
   constructor(private prisma: PrismaService) {}
 
-  async createWorkday(userId: string, workday: CreateWorkdayDto) {
+  async saveWorkday(userId: string, workday: CreateWorkdayDto) {
     try {
       console.log('Saving workday for user:', userId, 'with data:', workday);
       // Check if a workday already exists for the user on the same date
+
+      const formattedDate = new Date(workday.date);
       const existingWorkday = await this.prisma.workday.findFirst({
         where: {
           userId: userId,
-          date: workday.date,
+          date: formattedDate,
         },
       });
 
@@ -26,7 +27,7 @@ export class WorkdayService {
       const newWorkday = await this.prisma.workday.create({
         data: {
           userId: userId,
-          date: workday.date,
+          date: formattedDate,
           activities: workday.activities,
           learnings: workday.learnings,
           mealLocation: workday.mealLocation,
@@ -55,15 +56,17 @@ export class WorkdayService {
     }
   }
 
-  async getWorkDays(userId: string): Promise<Workday[]> {
+  async deleteWorkday(userId: string, date: string) {
     try {
-      const workdays = await this.prisma.workday.findMany({
-        where: { userId: userId },
-        orderBy: { date: 'desc' },
+      await this.prisma.workday.deleteMany({
+        where: {
+          userId: userId,
+          date: new Date(date), // Ensure date is in correct format
+        },
       });
-      return workdays;
-    } catch {
-      throw new Error('Error fetching workdays');
+    } catch (error) {
+      console.error('Error deleting workday:', error);
+      throw new Error('Error deleting workday');
     }
   }
 }

@@ -40,15 +40,16 @@ export const getProfile = async (): Promise<User> => {
   return response.data;
 };
 
-export const getWorkDaysFromServer = async () => {
-  console.log("📅 Fetching work days via Next.js API proxy");
-  const response = await nextApiClient.get("/api/workday");
-  return response.data;
-};
-
 export const saveWorkDayToServer = (workDay: any) => {
   console.log("💾 Saving work day via Next.js API proxy");
   return nextApiClient
     .post("/api/workday", workDay)
+    .then((response) => response.data);
+};
+
+export const deleteWorkdayFromServer = (date: string) => {
+  console.log("🗑️ Deleting work day via Next.js API proxy");
+  return nextApiClient
+    .delete(`/api/workday/`, { data: { date } })
     .then((response) => response.data);
 };

@@ -8,12 +8,13 @@ import {
   WorkDaysList,
   SettingsModal,
 } from "@/components";
-import { Workday, WorkStats, WorkPracticeSettings } from "@/types";
 import {
-  saveWorkday,
-  deleteWorkday,
-  saveWorkPracticeSettings,
-} from "@/utils/storage";
+  Workday,
+  WorkStats,
+  WorkPracticeSettings,
+  CreateWorkDay,
+} from "@/types";
+import { saveWorkday, deleteWorkday } from "@/utils/storage";
 import { calculateStats } from "@/utils/stats";
 import { BarChart3, CalendarDays, Plus, Settings, List } from "lucide-react";
 import { useUser } from "@/context/UserContext";
@@ -80,7 +81,7 @@ export default function Home() {
     console.log("User data:", userProfile);
   }, [userProfile]);
 
-  const handleSaveWorkday = async (workday: Workday) => {
+  const handleSaveWorkday = async (workday: any) => {
     try {
       // Save the work day to server
       await saveWorkday(workday);
@@ -125,11 +126,6 @@ export default function Home() {
     console.log("existing workday:", workday);
 
     openModal(formattedDate, workday);
-  };
-
-  const handleSaveSettings = (newSettings: WorkPracticeSettings) => {
-    saveWorkPracticeSettings(newSettings);
-    setStats(calculateStats(workdays, newSettings));
   };
 
   const tabs = [
@@ -257,14 +253,7 @@ export default function Home() {
             closeModal();
           }}
           onSave={handleSaveWorkday}
-        />
-
-        {/* Settings Modal */}
-        <SettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={handleSaveSettings}
-          currentSettings={settings}
+          onDelete={handleDeleteWorkday}
         />
       </div>
     </div>

@@ -43,6 +43,9 @@
     @apply px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors;
     color: var(--text-primary);
   }
+  .btn-danger {
+    @apply rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors;
+  }
 
   .text-primary {
     color: var(--text-primary);
