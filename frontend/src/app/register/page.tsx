@@ -1,17 +1,7 @@
 "use client";
 import { completeRegistration } from "@/services/api";
-import {
-  BookOpen,
-  Briefcase,
-  Calendar,
-  CalendarDays,
-  Check,
-  LogOut,
-  Save,
-  User,
-} from "lucide-react";
+import { Briefcase, Calendar, LogOut, Save, User } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useActionState } from "react";
 import { signOut } from "next-auth/react";
 
 import { useSession } from "next-auth/react";
