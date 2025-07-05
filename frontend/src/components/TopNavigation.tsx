@@ -6,6 +6,7 @@ import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import ProfileButtonSkeleton from "@/components/skeletons/TopNavigationSkeleton";
+import { exportToExcel } from "@/utils/exportToExcel";
 
 export default function TopNavigation() {
   const { userProfile, isLoading } = useUser();
@@ -31,9 +32,13 @@ export default function TopNavigation() {
   }, []);
 
   const handleExport = () => {
-    // TODO: Implement export functionality
-    console.log("Export functionality not implemented yet");
-    alert("Vienti-toiminto toteutetaan pian!");
+    if (userProfile && userProfile.userWorkdays) {
+      exportToExcel(userProfile, userProfile.userWorkdays);
+    } else {
+      alert(
+        "Käyttäjätietoja ei voitu ladata vientiä varten. Yritä päivittää sivu."
+      );
+    }
   };
 
   const handleProfile = () => {
@@ -60,6 +65,8 @@ export default function TopNavigation() {
             </h1>
             <button
               onClick={handleExport}
+              // Button is disabled if userProfile is not available or if data is loading
+              disabled={!userProfile || isLoading}
               className="flex items-center space-x-2 px-4 py-2 rounded-lg glass-card glass-card-hover text-primary transition-all"
             >
               <FileDown className="w-4 h-4" />
