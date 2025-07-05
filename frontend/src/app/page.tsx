@@ -59,7 +59,6 @@ export default function Home() {
 
   useEffect(() => {
     setStats(calculateStats(workdays, settings));
-    console.log("User data:", userProfile);
   }, [userProfile]);
 
   useEffect(() => {
@@ -223,7 +222,8 @@ export default function Home() {
             <div className="grid lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <Calendar
-                  workDays={workdays}
+                  userWorkdays={workdays}
+                  workDays={userProfile?.workdays || []}
                   onDateSelect={handleDateSelect}
                   selectedDate={modalData.selectedDate}
                 />

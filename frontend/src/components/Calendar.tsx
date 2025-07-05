@@ -5,13 +5,15 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Workday } from "@/types";
 
 interface CalendarProps {
-  workDays: Workday[];
+  userWorkdays: Workday[];
+  workDays: number[];
   onDateSelect: (date: string) => void;
   selectedDate?: string;
 }
 
 export const Calendar: React.FC<CalendarProps> = ({
   workDays,
+  userWorkdays,
   onDateSelect,
   selectedDate,
 }) => {
@@ -45,7 +47,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   ).getDay();
 
   const workDayDates = new Set(
-    workDays.map((day) => new Date(day.date).toISOString().split("T")[0])
+    userWorkdays.map((day) => new Date(day.date).toISOString().split("T")[0])
   );
 
   const navigateMonth = (direction: "prev" | "next") => {
@@ -72,21 +74,36 @@ export const Calendar: React.FC<CalendarProps> = ({
     );
   };
 
+  const isWorkdayType = (day: number): boolean => {
+    const date = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      day
+    );
+    // In JS, getDay() returns 0 for Sunday, 1 for Monday, etc.
+    // This matches the user's requirement.
+    return workDays.includes(date.getDay());
+  };
+
   const renderCalendarDays = () => {
     const days = [];
 
+    // Adjust for Monday start (0 = Monday, 6 = Sunday)
+    const firstDayIndex = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
     // Empty cells for days before month starts
-    for (let i = 0; i < firstDayOfMonth; i++) {
+    for (let i = 0; i < firstDayIndex; i++) {
       days.push(<div key={`empty-${i}`} className="p-2"></div>);
     }
 
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = formatDate(day);
-      const hasWorkDay = workDayDates.has(dateStr);
+      const hasWorkDayEntry = workDayDates.has(dateStr);
       const isSelected = selectedDate === dateStr;
       const today = isToday(day);
       const isHovered = hoveredDate === dateStr;
+      const isAWorkdayType = isWorkdayType(day);
 
       days.push(
         <button
@@ -94,20 +111,25 @@ export const Calendar: React.FC<CalendarProps> = ({
           onClick={() => onDateSelect(dateStr)}
           onMouseEnter={() => setHoveredDate(dateStr)}
           onMouseLeave={() => setHoveredDate(null)}
+          disabled={!isAWorkdayType}
           className={`
             relative p-2 w-full h-12 rounded-lg text-sm font-medium transition-all duration-150
-            hover:scale-105 hover:shadow-md group
+            group
             ${
-              hasWorkDay
-                ? "bg-gradient-to-r from-success-400 to-success-500 text-white shadow-md"
-                : today
-                ? "glass-card text-primary border-2 border-white/30"
-                : "glass-card text-secondary glass-card-hover"
+              !isAWorkdayType
+                ? "glass-card text-secondary opacity-30 pointer-events-none"
+                : `hover:scale-105 hover:shadow-md ${
+                    hasWorkDayEntry
+                      ? "bg-gradient-to-r from-success-400 to-success-500 text-white shadow-md"
+                      : today
+                      ? "glass-card text-primary border-2 border-white/30"
+                      : "glass-card text-secondary glass-card-hover"
+                  }`
             }
           `}
         >
           {day}
-          {!hasWorkDay && isHovered && (
+          {!hasWorkDayEntry && isHovered && isAWorkdayType && (
             <Plus className="absolute bottom-1 right-1 w-3 h-3 text-white/60" />
           )}
         </button>
@@ -140,7 +162,7 @@ export const Calendar: React.FC<CalendarProps> = ({
       </div>
 
       <div className="grid grid-cols-7 gap-2 mb-4">
-        {["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"].map((day) => (
+        {["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"].map((day) => (
           <div
             key={day}
             className="text-center text-sm font-medium text-muted p-2"
