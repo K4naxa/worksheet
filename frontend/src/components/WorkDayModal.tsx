@@ -98,6 +98,9 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
     if (
       !ModalFormData.activities.trim() ||
       !ModalFormData.learnings.trim() ||
+      ModalFormData.mealLocation === "" ||
+      (ModalFormData.mealLocation === "other" &&
+        !ModalFormData.mealLocationOther.trim()) ||
       ModalFormData.hours <= 0
     ) {
       setError("Täytä kaikki pakolliset kentät.");
@@ -278,27 +281,53 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               <label className="text-primary font-medium">Työtunnit</label>
             </div>
             {isEditing ? (
-              <input
-                type="number"
-                value={ModalFormData.hours}
-                onChange={(e) =>
-                  setModalFormData({
-                    ...ModalFormData,
-                    hours: Math.max(0, parseFloat(e.target.value) || 0),
-                  })
-                }
-                min="0"
-                max="24"
-                step="0.5"
-                className="input-field"
-                required
-                disabled={isFormDisabled}
-              />
+              <div className="flex items-center gap-4">
+                <div className="w-full">
+                  <input
+                    type="range"
+                    min="0.25"
+                    max="10"
+                    step="0.25"
+                    value={ModalFormData.hours}
+                    onChange={(e) =>
+                      setModalFormData({
+                        ...ModalFormData,
+                        hours: parseFloat(e.target.value),
+                      })
+                    }
+                    className=" range-themed"
+                    disabled={isFormDisabled}
+                  />
+                  <div className="flex justify-between text-xs text-muted pt-1">
+                    <span>15min</span>
+                    <span className="-ml-5">5h</span>
+                    <span>10h</span>
+                  </div>
+                </div>
+                <div className="bg-white/10 rounded-md px-3 py-1.5 w-28 flex flex-col justify-start text-start text-primary">
+                  <span>{`${Math.floor(ModalFormData.hours)} tuntia`}</span>
+                  <span>
+                    {` ${Math.round((ModalFormData.hours % 1) * 60)} min`}
+                  </span>
+                </div>
+              </div>
             ) : (
               <div className="p-3 rounded-lg bg-white/5 text-secondary">
-                {ModalFormData.hours > 0
-                  ? `${ModalFormData.hours} tuntia`
-                  : "Ei työtunteja."}
+                {ModalFormData.hours > 0 ? (
+                  <>
+                    {" "}
+                    <span>{`${Math.floor(ModalFormData.hours)} tuntia`}</span>
+                    {(ModalFormData.hours % 1) * 60 !== 0 && (
+                      <span>
+                        {` ${Math.round(
+                          (ModalFormData.hours % 1) * 60
+                        )} minuuttia`}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  "Ei työtunteja."
+                )}
               </div>
             )}
           </div>

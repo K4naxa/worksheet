@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Scrollbar for Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--glass-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary); /* This is a gradient, see note below */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--glass-bg-hover);
+}
+
+/* For Firefox */
+@layer base {
+  html {
+    scrollbar-width: auto;
+    scrollbar-color: #8b5cf6 var(--glass-bg); /* thumb-color track-color */
+  }
+}
+
 :root {
   /* Glass morphism backgrounds */
   --glass-bg: rgba(255, 255, 255, 0.1);
@@ -31,7 +57,7 @@
   }
 
   .btn-primary {
-    @apply px-6 py-3 rounded-xl font-medium transition-all text-white;
+    @apply px-6 py-3 rounded-xl font-medium transition-all;
     background: var(--gradient-primary);
   }
 
@@ -42,6 +68,9 @@
   .btn-secondary {
     @apply px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors;
     color: var(--text-primary);
+  }
+  .btn-danger {
+    @apply rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors;
   }
 
   .text-primary {
@@ -60,12 +89,80 @@
     color: var(--text-disabled);
   }
 
+  .no-scroll {
+    overflow: hidden;
+  }
+
   .input-field {
     @apply w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50;
   }
 
-  .bg-gradient-primary {
-    @apply text-white;
+  /* Themed Range Slider */
+  .range-themed {
+    /* 1. Reset the default appearance */
+    @apply appearance-none w-full cursor-pointer;
+    /* Set a transparent background for the input element itself */
+    background-color: transparent;
+  }
+
+  /* == Track Styles == */
+
+  /* Webkit (Chrome, Safari, Edge) */
+  .range-themed::-webkit-slider-runnable-track {
+    @apply h-2 w-full rounded-full;
+    background-color: var(--glass-bg); /* Your bg-white/10 equivalent */
+  }
+
+  /* Firefox */
+  .range-themed::-moz-range-track {
+    @apply h-2 w-full rounded-full;
+    background-color: var(--glass-bg);
+  }
+
+  /* == Thumb Styles == */
+
+  /* Webkit (Chrome, Safari, Edge) */
+  .range-themed::-webkit-slider-thumb {
+    /* 2. Reset thumb appearance for custom styling */
+    @apply appearance-none;
+    /* 3. Style the thumb */
+    @apply h-5 w-5 rounded-full shadow-lg transform transition-all duration-150 ease-in-out;
+    background: var(--gradient-primary); /* Use your primary gradient */
+    /* This trick vertically centers the thumb on the track */
+    margin-top: -6px;
+  }
+
+  /* Hover and Active states for Webkit */
+  .range-themed:hover::-webkit-slider-thumb {
+    @apply scale-110;
+  }
+  .range-themed:active::-webkit-slider-thumb {
+    @apply scale-125 shadow-xl;
+  }
+
+  /* Firefox */
+  .range-themed::-moz-range-thumb {
+    /* Firefox requires no appearance reset, but needs a border to hide artifacts */
+    @apply h-5 w-5 rounded-full shadow-lg border-none transform transition-all duration-150 ease-in-out;
     background: var(--gradient-primary);
+  }
+
+  /* Hover and Active states for Firefox */
+  .range-themed:hover::-moz-range-thumb {
+    @apply scale-110;
+  }
+  .range-themed:active::-moz-range-thumb {
+    @apply scale-125 shadow-xl;
+  }
+
+  /* Disabled State */
+  .range-themed:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  .range-themed:disabled::-webkit-slider-thumb {
+    background: var(--glass-bg-hover);
+  }
+  .range-themed:disabled::-moz-range-thumb {
+    background: var(--glass-bg-hover);
   }
 }
