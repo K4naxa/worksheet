@@ -260,7 +260,7 @@ export default function Home() {
                     </li>
                     <li>• Vihreät päivät näyttävät suoritetut työpäivät</li>
                     <li>• Seuraa edistymistäsi Tilastot-välilehdessä</li>
-                    <li>• Määritä harjoittelun ajankohta asetuksista</li>
+                    <li>• Määritä harjoittelun ajankohtaa Profiili sivulla</li>
                   </ul>
                 </div>
               </div>
