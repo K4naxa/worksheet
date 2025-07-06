@@ -1,5 +1,3 @@
-// src/utils/exportToExcel.ts
-
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { User, Workday } from "@/types";
@@ -18,6 +16,12 @@ const getFinnishWeekday = (date: Date): string => {
   return date.toLocaleDateString("fi-FI", { weekday: "long" });
 };
 
+const mealLocationTranslations: { [key: string]: string } = {
+  school: "Koulu",
+  work: "Työpaikka",
+  // 'other' is handled separately
+};
+
 export const exportToExcel = async (user: User, workdays: Workday[]) => {
   if (!user || workdays.length === 0) {
     console.error("User data or workdays are missing for export.");
@@ -31,14 +35,15 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
     pageSetup: { paperSize: 9, orientation: "landscape" },
   });
 
-  const purpleColor = "FF8B5CF6"; // A key color from your theme
+  const purpleColor = "FF8B5CF6"; // A key color from the theme
   const darkTextColor = "FF1E1B4B"; // A dark text color for contrast
   const lightTextColor = "FFFFFFFF";
+  const summaryBgColor = "FFE8E5FC"; // A light purple for the summary row
   const borderColor = "FFD1D5DB";
 
   // --- 2. Column Widths ---
   worksheet.columns = [
-    { key: "date", width: 15 },
+    { key: "date", width: 20 },
     { key: "weekday", width: 15 },
     { key: "hours", width: 10 },
     { key: "activities", width: 45 },
@@ -65,7 +70,7 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
   const details = [
     ["Oppilas:", user.name],
     ["Työpaikka:", user.company],
-    ["Työpaikkaohjaaja:", user.instructor], // <-- Added instructor
+    ["Työpaikkaohjaaja:", user.instructor],
     ["Oppilaitos:", "Tampereen seudun ammattiopisto Tredu"],
     ["Lukuvuosi:", getSchoolYear()],
   ];
@@ -121,14 +126,21 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
 
   sortedWorkdays.forEach((day) => {
     const date = new Date(day.date);
+
+    let mealLocationDisplay = "";
+    if (day.mealLocation === "other") {
+      mealLocationDisplay = day.mealLocationOther || "Muu";
+    } else {
+      mealLocationDisplay =
+        mealLocationTranslations[day.mealLocation] || day.mealLocation;
+    }
     const rowData = {
       date: date.toLocaleDateString("fi-FI"),
       weekday: getFinnishWeekday(date),
       hours: day.hours,
       activities: day.activities,
       learnings: day.learnings,
-      mealLocation:
-        day.mealLocation === "other" ? day.mealLocationOther : day.mealLocation,
+      mealLocation: mealLocationDisplay,
     };
     const row = worksheet.addRow(rowData);
 
@@ -144,8 +156,165 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
     });
   });
 
-  // --- 6. Signature Section (NEW) ---
-  worksheet.addRows([[], [], []]); // Add some blank rows for spacing before signatures
+  // --- 6. Summary Table ---
+
+  // A. Calculate the summaries (this part remains the same)
+  const totalDays = workdays.length;
+  const totalHours = workdays.reduce((sum, day) => sum + (day.hours || 0), 0);
+  const mealCounts = workdays.reduce((counts, day) => {
+    const location = day.mealLocation;
+    counts[location] = (counts[location] || 0) + 1;
+    return counts;
+  }, {} as { [key: string]: number });
+
+  // B. Add spacing before the summary table
+  worksheet.addRows([[], []]);
+
+  // C. Create the Summary Table Header
+  const summaryHeaderRow = worksheet.addRow(["Yhteenveto"]);
+  const headerCell = summaryHeaderRow.getCell(1);
+  worksheet.mergeCells(`A${headerCell.row}:F${headerCell.row}`); // Merge across all columns
+  headerCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: purpleColor }, // Use the main header color
+  };
+  headerCell.font = { color: { argb: lightTextColor }, bold: true, size: 14 };
+  headerCell.alignment = { vertical: "middle", horizontal: "center" };
+  headerCell.border = {
+    top: { style: "thin", color: { argb: borderColor } },
+    bottom: { style: "medium", color: { argb: purpleColor } },
+  };
+  summaryHeaderRow.height = 30;
+
+  // D. Add work statistics subheader
+  const workStatsHeaderRow = worksheet.addRow(["Työ tilastot"]);
+  const workStatsHeaderCell = workStatsHeaderRow.getCell(1);
+  worksheet.mergeCells(
+    `A${workStatsHeaderCell.row}:F${workStatsHeaderCell.row}`
+  );
+  workStatsHeaderCell.font = {
+    bold: true,
+    size: 11,
+    color: { argb: darkTextColor },
+  };
+  workStatsHeaderCell.alignment = { vertical: "middle", horizontal: "center" };
+  workStatsHeaderCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: summaryBgColor },
+  };
+  workStatsHeaderCell.border = {
+    top: { style: "thin", color: { argb: borderColor } },
+  };
+
+  // E. Add work statistics rows
+  const workStatsData = [
+    { label: "Työpäiviä yhteensä", value: `${totalDays} kpl` },
+    { label: "Tunteja yhteensä", value: `${totalHours} h` },
+  ];
+
+  workStatsData.forEach((item, index) => {
+    const row = worksheet.addRow([]);
+    const rowNumber = row.number;
+
+    worksheet.mergeCells(`A${rowNumber}:B${rowNumber}`);
+    const labelCell = worksheet.getCell(`A${rowNumber}`);
+    labelCell.value = item.label;
+
+    worksheet.mergeCells(`C${rowNumber}:F${rowNumber}`);
+    const valueCell = worksheet.getCell(`C${rowNumber}`);
+    valueCell.value = item.value;
+
+    [labelCell, valueCell].forEach((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: summaryBgColor },
+      };
+      cell.font = { color: { argb: darkTextColor }, name: "Calibri", size: 11 };
+      cell.border = {
+        left: { style: "thin", color: { argb: borderColor } },
+        right: { style: "thin", color: { argb: borderColor } },
+      };
+    });
+
+    labelCell.font = { ...labelCell.font, bold: true };
+    labelCell.alignment = {
+      vertical: "middle",
+      horizontal: "right",
+      indent: 1,
+    };
+    valueCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
+  });
+
+  // F. Add meal subheader
+  const mealSubHeaderRow = worksheet.addRow(["Ruokailut"]);
+  const mealSubHeaderCell = mealSubHeaderRow.getCell(1);
+  worksheet.mergeCells(`A${mealSubHeaderCell.row}:F${mealSubHeaderCell.row}`);
+  mealSubHeaderCell.font = {
+    bold: true,
+    size: 11,
+    color: { argb: darkTextColor },
+  };
+  mealSubHeaderCell.alignment = { vertical: "middle", horizontal: "center" };
+  mealSubHeaderCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: summaryBgColor },
+  };
+  mealSubHeaderCell.border = {
+    top: { style: "thin", color: { argb: borderColor } },
+  };
+
+  // G. Add meal summary data
+  const mealSummaryData = Object.entries(mealCounts).map(
+    ([location, count]) => {
+      const translatedLabel =
+        mealLocationTranslations[location] || "Muu ruokailu";
+      return { label: translatedLabel, value: `${count} kpl` };
+    }
+  );
+
+  mealSummaryData.forEach((item, index) => {
+    const row = worksheet.addRow([]);
+    const rowNumber = row.number;
+
+    worksheet.mergeCells(`A${rowNumber}:B${rowNumber}`);
+    const labelCell = worksheet.getCell(`A${rowNumber}`);
+    labelCell.value = item.label;
+
+    worksheet.mergeCells(`C${rowNumber}:F${rowNumber}`);
+    const valueCell = worksheet.getCell(`C${rowNumber}`);
+    valueCell.value = item.value;
+
+    [labelCell, valueCell].forEach((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: summaryBgColor },
+      };
+      cell.font = { color: { argb: darkTextColor }, name: "Calibri", size: 11 };
+      cell.border = {
+        left: { style: "thin", color: { argb: borderColor } },
+        right: { style: "thin", color: { argb: borderColor } },
+        ...(index === mealSummaryData.length - 1 && {
+          bottom: { style: "thin", color: { argb: borderColor } },
+        }),
+      };
+    });
+
+    labelCell.font = { ...labelCell.font, bold: true };
+    labelCell.alignment = {
+      vertical: "middle",
+      horizontal: "right",
+      indent: 1,
+    };
+    valueCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
+  });
+
+  // --- 7. Signature Section ---
+  worksheet.addRows([[], [], []]);
 
   const signatureRow = worksheet.addRow([]); // This row will contain the signature lines
   const signatureRowNumber = signatureRow.number;
