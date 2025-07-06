@@ -67,7 +67,7 @@ export const Statistics: React.FC<StatisticsProps> = ({ stats }) => {
           return (
             <div
               key={index}
-              className="glass-card rounded-2xl p-6 hover:transform hover:scale-105 transition-all duration-300"
+              className="glass-card rounded-2xl p-6 transition-all duration-300"
             >
               <div
                 className={`w-12 h-12 rounded-xl bg-gradient-to-r ${item.color} flex items-center justify-center mb-4`}
