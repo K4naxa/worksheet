@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { exportToExcel } from "@/utils/exportToExcel";
 import { User } from "@/types";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function TopNavigation({
   userProfile,
@@ -57,23 +58,31 @@ export default function TopNavigation({
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Left side - Logo and Export button */}
-          <div className="flex items-center space-x-10">
+          <div className="flex items-center space-x-4 md:space-x-6">
             <Link
               href="/"
-              className="text-xl md:text-2xl font-bold text-primary hover:cursor-pointer hover:text-primary-200/70 transition-colors"
+              className="flex items-center space-x-3 transition-transform duration-300 ease-in-out hover:scale-[1.03] hover:opacity-90"
             >
-              Työharjoittelu Seuranta
+              <Image
+                src="/pwa/icons/icon-192x192.png"
+                alt="Työpäiväkirja Logo"
+                width={40}
+                height={40}
+                priority
+              />
+              <span className="hidden sm:inline text-xl font-bold text-primary">
+                Työpäiväkirja
+              </span>
             </Link>
 
             {/* Export button */}
             <button
               onClick={handleExport}
-              // Button is disabled if userProfile is not available or if data is loading
-              disabled={isLoading || !userProfile}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg glass-card glass-card-hover text-primary transition-all"
+              disabled={!userProfile}
+              className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-lg glass-card glass-card-hover text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FileDown className="w-4 h-4" />
-              <span className="hidden sm:inline">Export</span>
+              <span>Export</span>
             </button>
           </div>
 
@@ -100,6 +109,14 @@ export default function TopNavigation({
                   <User2 className="w-4 h-4" />
                   <span>Profiili</span>
                 </Link>
+                <button
+                  onClick={handleExport}
+                  disabled={!userProfile}
+                  className="flex md:hidden w-full px-4 py-3 text-left text-primary hover:bg-white/5 transition-colors items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileDown className="w-4 h-4" />
+                  <span>Export</span>
+                </button>
                 <button
                   onClick={handleLogout}
                   className="w-full px-4 py-3 text-left text-primary hover:bg-white/5 transition-colors flex items-center space-x-2"

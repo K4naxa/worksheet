@@ -1,4 +1,5 @@
 import LoginButton from "@/components/LoginButton";
+import Image from "next/image";
 
 export default function LoginPage() {
   return (
@@ -10,6 +11,13 @@ export default function LoginPage() {
       {/* Header Section */}
       <div className="text-center mb-10">
         <div className="flex items-center justify-center space-x-4 mb-4">
+          <Image
+            src="/pwa/icons/icon-192x192.png" // Path to your logo in the public folder
+            alt="Työpäiväkirja Logo"
+            width={80} // Specify width
+            height={80} // Specify height
+            priority // Add priority=true for images "above the fold" to load them faster
+          />
           <h1 className="text-4xl md:text-5xl font-bold text-primary">
             Työharjoittelu Seuranta
           </h1>
