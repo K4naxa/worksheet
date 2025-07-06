@@ -1,14 +1,16 @@
 import "./globals.css";
 import "./manifest.js";
 import AuthProvider from "../context/AuthContext";
-import { UserProvider } from "@/context/UserContext";
+import { getUserProfile } from "@/lib/data";
 import ConditionalLayout from "@/Layouts/ConditionalLayout";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const userProfile = await getUserProfile();
+
   return (
     <html lang="fi">
       <body
@@ -16,9 +18,9 @@ export default function RootLayout({
         className="min-h-screen"
       >
         <AuthProvider>
-          <UserProvider>
-            <ConditionalLayout>{children}</ConditionalLayout>
-          </UserProvider>
+          <ConditionalLayout userProfile={userProfile}>
+            {children}
+          </ConditionalLayout>
         </AuthProvider>
       </body>
     </html>
