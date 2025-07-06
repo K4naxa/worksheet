@@ -4,6 +4,10 @@ import { getUserProfile } from "@/lib/data";
 
 import { redirect } from "next/navigation";
 
+// This page is a Server Component that fetches data and passes it to the Client Component.
+// It uses Next.js's dynamic rendering to ensure the data is always fresh.
+export const dynamic = "force-dynamic";
+
 export default async function RegisterPage() {
   // Fetch data on the server
   const userProfile = await getUserProfile();
