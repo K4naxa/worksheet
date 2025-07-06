@@ -18,7 +18,10 @@ import { useRouter } from "next/navigation";
 
 import { ConfirmationModal } from "@/components";
 
-import { updateUserProfileAction, deleteUserAccountAction } from "../actions";
+import {
+  updateUserProfileAction,
+  deleteUserAccountAction,
+} from "../../actions";
 import { RegistrationComplition, User } from "@/types";
 
 export function ProfilePageClient({

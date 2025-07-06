@@ -2,6 +2,7 @@ import { getUserProfile, getUserWorkdays } from "@/lib/data";
 import { HomePageClient } from "./HomePageClient";
 import { HomePageSkeleton } from "@/components/skeletons/HomePageSkeleton";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 // This page is a Server Component that fetches data and passes it to the Client Component.
 // It uses Next.js's dynamic rendering to ensure the data is always fresh.
@@ -22,9 +23,11 @@ export default async function Home() {
 
   // The Server Component's only job is to fetch data and pass it to the Client Component.
   return (
-    <HomePageClient
-      initialProfile={userProfile}
-      initialWorkdays={userWorkdays}
-    />
+    <Suspense fallback={<HomePageSkeleton />}>
+      <HomePageClient
+        initialProfile={userProfile}
+        initialWorkdays={userWorkdays}
+      />
+    </Suspense>
   );
 }

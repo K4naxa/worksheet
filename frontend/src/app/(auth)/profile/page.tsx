@@ -9,6 +9,11 @@ import { Suspense } from "react";
 // It uses Next.js's dynamic rendering to ensure the data is always fresh.
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Profiili",
+  description: "Täältä voit tarkastella ja muokata profiilitietojasi.",
+};
+
 export default async function ProfilePage() {
   // Fetch data on the server
   const userProfile = await getUserProfile();

@@ -1,27 +1,31 @@
 import "./globals.css";
-import "./manifest.js";
 import AuthProvider from "../context/AuthContext";
-import { getUserProfile } from "@/lib/data";
-import ConditionalLayout from "@/Layouts/ConditionalLayout";
+import { title } from "process";
 
+export const metadata = {
+  manifest: "/manifest.json",
+  title: {
+    default: "Työpäiväkirja",
+    template: "%s | Työpäiväkirja",
+  },
+  description:
+    "Seuraa päivittäisiä aktiviteettejasi ja edistymistäsi työharjoittelun aikana.",
+};
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const userProfile = await getUserProfile();
-
   return (
     <html lang="fi">
+      <head>
+        <meta name="theme-color" content="#581c87" />
+      </head>
       <body
         style={{ background: "var(--gradient-background)" }}
         className="min-h-screen"
       >
-        <AuthProvider>
-          <ConditionalLayout userProfile={userProfile}>
-            {children}
-          </ConditionalLayout>
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
