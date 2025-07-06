@@ -212,15 +212,9 @@ export function HomePageClient({
     <div className="">
       <div className="container mx-auto p-4">
         {/* Header */}
-        <div className="text-center mb-8">
-          <p className="text-secondary text-lg max-w-2xl mx-auto">
-            Seuraa päivittäisiä aktiviteettejasi, oppimistasi ja edistymistäsi
-            työharjoittelun aikana
-          </p>
-        </div>
 
         {/* Navigation Tabs */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-8 ">
           <div className="flex items-center space-x-4">
             <div className="glass-card rounded-2xl p-2">
               <div className="flex space-x-2">

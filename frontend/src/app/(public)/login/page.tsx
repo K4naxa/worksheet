@@ -19,11 +19,13 @@ export default function LoginPage() {
             priority // Add priority=true for images "above the fold" to load them faster
           />
           <h1 className="text-4xl md:text-5xl font-bold text-primary">
-            Työharjoittelu Seuranta
+            Työpäiväkirja
           </h1>
         </div>
         <p className="text-secondary text-lg max-w-2xl mx-auto">
-          Seuraa päivittäisiä aktiviteettejasi ja edistymistäsi helposti.
+          Seuraa päivittäisiä tekemistäsi ja oppimistasi työharjoittelun aikana.{" "}
+          <br />
+          Saat tietosi talteen ja voit jakaa ne helposti opettajasi kanssa.
         </p>
       </div>
 

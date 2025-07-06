@@ -67,7 +67,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-primary mb-6">Työpäivät</h2>
 
-      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
         {sortedWorkDays.map((workDay) => {
           const mealDisplay = getMealLocationDisplay(workDay);
 

@@ -1,7 +1,7 @@
 {
   "name": "Työpäiväkirja",
   "short_name": "Työpäiväkirja",
-  "description": "Seuraa päivittäisiä aktiviteettejasi ja edistymistäsi työharjoittelun aikana.",
+  "description": "Seuraa päivittäisiä tekemistäsi ja oppimistasi työharjoittelun aikana.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e1b4b",

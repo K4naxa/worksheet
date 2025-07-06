@@ -10,7 +10,7 @@ export default async function AuthLayout({
   const userProfile = await getUserProfile();
 
   return (
-    <div>
+    <div className="sm:space-y-10">
       <TopNavigation userProfile={userProfile} />
       <main>{children}</main>
     </div>
