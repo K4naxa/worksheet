@@ -111,25 +111,26 @@ export const Calendar: React.FC<CalendarProps> = ({
           onClick={() => onDateSelect(dateStr)}
           onMouseEnter={() => setHoveredDate(dateStr)}
           onMouseLeave={() => setHoveredDate(null)}
-          disabled={!isAWorkdayType}
+          disabled={!isAWorkdayType && !today}
           className={`
             relative p-2 w-full h-12 rounded-lg text-sm font-medium transition-all duration-150
             group
+            ${today ? "border-2 border-white/50" : ""}
             ${
-              !isAWorkdayType
+              !isAWorkdayType && !today
                 ? "glass-card text-secondary opacity-30 pointer-events-none"
+                : today && !isAWorkdayType
+                ? "glass-card text-secondary opacity-30 pointer-events-none border-white/90"
                 : `hover:scale-105 hover:shadow-md ${
                     hasWorkDayEntry
-                      ? "bg-gradient-to-r from-success-400 to-success-500 text-white shadow-md"
-                      : today
-                      ? "glass-card text-primary border-2 border-white/30"
+                      ? "bg-gradient-to-r from-success-400 to-success-500 text-white shadow-md border-white/90"
                       : "glass-card text-secondary glass-card-hover"
                   }`
             }
           `}
         >
           {day}
-          {!hasWorkDayEntry && isHovered && isAWorkdayType && (
+          {!hasWorkDayEntry && isHovered && (isAWorkdayType || today) && (
             <Plus className="absolute bottom-1 right-1 w-3 h-3 text-white/60" />
           )}
         </button>
@@ -180,7 +181,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           <span className="text-secondary">Työpäivä</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 border-2 border-white/30 rounded-full"></div>
+          <div className="w-3 h-3 border-2 border-white/50 rounded-full"></div>
           <span className="text-secondary">Tänään</span>
         </div>
       </div>
