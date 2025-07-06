@@ -1,5 +1,3 @@
-// src/app/login/page.tsx (or wherever your login page is)
-
 import LoginButton from "@/components/LoginButton";
 
 export default function LoginPage() {

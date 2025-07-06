@@ -48,8 +48,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
 }) => {
   // State for form fields
 
-  const [ModalFormData, setModalFormData] = useState<Workday>({
-    id: "",
+  const [ModalFormData, setModalFormData] = useState<Workday | CreateWorkDay>({
     date: selectedDate,
     activities: "",
     learnings: "",
@@ -98,9 +97,8 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
     if (
       !ModalFormData.activities.trim() ||
       !ModalFormData.learnings.trim() ||
-      ModalFormData.mealLocation === "" ||
       (ModalFormData.mealLocation === "other" &&
-        !ModalFormData.mealLocationOther.trim()) ||
+        !ModalFormData.mealLocationOther?.trim()) ||
       ModalFormData.hours <= 0
     ) {
       setError("Täytä kaikki pakolliset kentät.");
@@ -119,7 +117,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
       mealLocation: ModalFormData.mealLocation,
       // Only include mealLocationOther if mealLocation is 'other'
       ...(ModalFormData.mealLocation === "other" && {
-        mealLocationOther: ModalFormData.mealLocationOther.trim(),
+        mealLocationOther: ModalFormData.mealLocationOther?.trim(),
       }),
     };
 
@@ -388,7 +386,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               (isEditing ? (
                 <input
                   type="text"
-                  value={ModalFormData.mealLocationOther}
+                  value={ModalFormData.mealLocationOther || ""}
                   onChange={(e) =>
                     setModalFormData({
                       ...ModalFormData,
