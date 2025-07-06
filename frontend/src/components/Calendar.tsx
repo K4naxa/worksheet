@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Workday } from "@/types";
 
@@ -85,7 +85,7 @@ export const Calendar: React.FC<CalendarProps> = ({
     return workDays.includes(date.getDay());
   };
 
-  const renderCalendarDays = () => {
+  const renderCalendarDays = useMemo(() => {
     const days = [];
 
     // Adjust for Monday start (0 = Monday, 6 = Sunday)
@@ -138,7 +138,7 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
 
     return days;
-  };
+  }, [currentDate, workDays, selectedDate, hoveredDate]);
 
   return (
     <div className="glass-card rounded-2xl p-6">
@@ -173,7 +173,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-2">{renderCalendarDays()}</div>
+      <div className="grid grid-cols-7 gap-2">{renderCalendarDays}</div>
 
       <div className="mt-6 flex items-center justify-center space-x-6 text-sm">
         <div className="flex items-center space-x-2">

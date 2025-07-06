@@ -29,7 +29,6 @@ export interface User {
   email: string;
   name: string;
   registrationCompleted: boolean;
-  userWorkdays?: Workday[] | null;
   workdays?: number[] | null; // Array of integers representing workdays (0 = Sunday, 1 = Monday, etc.)
   company: string | null;
   instructor: string | null;

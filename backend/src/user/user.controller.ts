@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Post } from '@nestjs/common';
 import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { Registration } from 'src/types/import.types';
 import { KeycloakProfile } from 'src/types/keycloack.types';
 import { UserService } from 'src/user/user.service';
 
@@ -17,12 +18,12 @@ export class UserController {
     return this.userService.getRegistrationStatus(user);
   }
 
-  @Post('complete-registration')
-  completeRegistration(
+  @Post('register')
+  registerUser(
     @AuthenticatedUser() user: KeycloakProfile,
-    @Body() body: any,
+    @Body() body: Registration,
   ) {
-    return this.userService.completeRegistration(user, body);
+    return this.userService.registerUser(user, body);
   }
 
   @Delete('profile')

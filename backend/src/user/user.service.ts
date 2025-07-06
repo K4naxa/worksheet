@@ -86,7 +86,7 @@ export class UserService {
     return { registrationCompleted: user.registrationCompleted };
   }
 
-  async completeRegistration(
+  async registerUser(
     keycloakUser: KeycloakProfile,
     body: {
       company: string;

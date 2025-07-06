@@ -21,10 +21,10 @@ export class WorkdayController {
     return this.workdayService.saveWorkday(req.user.sub, req.body);
   }
 
-  @Delete(':date')
+  @Delete()
   async deleteWorkDay(
-    @Request() req: { user: KeycloakProfile; params: { date: string } },
+    @Request() req: { user: KeycloakProfile; body: { date: string } },
   ) {
-    return this.workdayService.deleteWorkday(req.user.sub, req.params.date);
+    return this.workdayService.deleteWorkday(req.user.sub, req.body.date);
   }
 }
