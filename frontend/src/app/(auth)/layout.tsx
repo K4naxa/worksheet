@@ -1,6 +1,6 @@
 import { TopNavigation } from "@/components";
 import { getUserProfile } from "@/lib/data";
-import { Redirect } from "next";
+import { redirect } from "next/navigation";
 
 export default async function AuthLayout({
   children,
@@ -9,9 +9,14 @@ export default async function AuthLayout({
 }) {
   const userProfile = await getUserProfile();
 
+  if (!userProfile) {
+    // If user profile is not found, redirect to login
+    return redirect("/login");
+  }
+
   return (
     <div className="sm:space-y-10">
-      <TopNavigation userProfile={userProfile} />
+      {userProfile && <TopNavigation userProfile={userProfile} />}
       <main>{children}</main>
     </div>
   );

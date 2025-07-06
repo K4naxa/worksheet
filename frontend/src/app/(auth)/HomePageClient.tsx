@@ -40,6 +40,8 @@ export function HomePageClient({
   const profile = initialProfile;
   const workdays = initialWorkdays;
 
+  console.log("initial workdays:", initialWorkdays);
+
   useEffect(() => {
     console.log("Profile:", profile);
     console.log("Workdays:", workdays);

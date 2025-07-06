@@ -19,8 +19,35 @@ export class WorkdayService {
         },
       });
 
+      // If a workday already exists, update it
       if (existingWorkday) {
-        throw new ConflictException('Workday already exists for this date');
+        const updatedWorkday = await this.prisma.workday.update({
+          where: {
+            id: existingWorkday.id,
+          },
+          data: {
+            activities: workday.activities,
+            learnings: workday.learnings,
+            mealLocation: workday.mealLocation,
+            mealLocationOther:
+              workday.mealLocation === 'other'
+                ? workday.mealLocationOther
+                : null,
+            hours: workday.hours,
+          },
+          select: {
+            id: true,
+            userId: true,
+            date: true,
+            activities: true,
+            learnings: true,
+            mealLocation: true,
+            hours: true,
+            createdAt: true,
+          },
+        });
+        console.log('Updated existing workday:', updatedWorkday);
+        return updatedWorkday;
       }
 
       // Create a new workday entry
@@ -78,6 +105,16 @@ export class WorkdayService {
         },
         orderBy: {
           date: 'desc',
+        },
+        select: {
+          id: true,
+          userId: true,
+          date: true,
+          activities: true,
+          learnings: true,
+          mealLocation: true,
+          hours: true,
+          createdAt: true,
         },
       });
 

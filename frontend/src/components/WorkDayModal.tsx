@@ -253,7 +253,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               />
             ) : (
               <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
-                {ModalFormData.activities || (
+                {ModalFormData.learnings || (
                   <span className="text-muted-foreground">
                     Ei aktiviteetteja.
                   </span>
