@@ -2,7 +2,7 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicRoutes = ["/login", "/forgot-password", "/reset-password"];
+const publicRoutes = ["/login"];
 
 export async function middleware(req: NextRequest) {
   console.log("🛡️ Middleware: Processing request to:", req.nextUrl.pathname);
@@ -57,6 +57,14 @@ export async function middleware(req: NextRequest) {
       "🚫 Middleware: Registration not completed, redirecting to registration"
     );
     return NextResponse.redirect(new URL("/register", req.url));
+  }
+
+  // 4. If session exists and accessing registration page, redirect to home
+  if (token && registrationCompleted && pathname === "/register") {
+    console.log(
+      "🚫 Middleware: User is authenticated and registered, redirecting to home"
+    );
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   // 4. if session exists and registration is completed
