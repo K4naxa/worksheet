@@ -69,4 +69,22 @@ export class WorkdayService {
       throw new Error('Error deleting workday');
     }
   }
+
+  async getWorkdays(userId: string) {
+    try {
+      const workdays = await this.prisma.workday.findMany({
+        where: {
+          userId: userId,
+        },
+        orderBy: {
+          date: 'desc',
+        },
+      });
+
+      return workdays;
+    } catch (error) {
+      console.error('Error fetching workdays:', error);
+      throw new Error('Error fetching workdays');
+    }
+  }
 }

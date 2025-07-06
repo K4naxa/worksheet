@@ -1,4 +1,4 @@
-import { Controller, Delete, Post, Request } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Request } from '@nestjs/common';
 import { WorkdayService } from 'src/workday/workday.service';
 
 import { CreateWorkdayDto } from 'src/workday/dto/workday.dto';
@@ -26,5 +26,10 @@ export class WorkdayController {
     @Request() req: { user: KeycloakProfile; body: { date: string } },
   ) {
     return this.workdayService.deleteWorkday(req.user.sub, req.body.date);
+  }
+
+  @Get()
+  async getWorkDays(@Request() req: { user: KeycloakProfile }) {
+    return this.workdayService.getWorkdays(req.user.sub);
   }
 }

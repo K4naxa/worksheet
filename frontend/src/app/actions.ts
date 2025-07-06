@@ -6,6 +6,7 @@ import {
   deleteWorkdayOnServer,
   updateUserProfileOnServer,
   deleteProfileOnServer,
+  getUserWorkdays,
 } from "@/lib/data";
 import { RegistrationComplition, Workday } from "@/types";
 
@@ -31,6 +32,16 @@ export async function deleteWorkdayAction(date: string) {
   } catch (error) {
     console.error("Server Action Error (deleteWorkdayAction):", error);
     return { success: false, error: "Failed to delete workday." };
+  }
+}
+
+export async function getUserWorkdaysAction() {
+  try {
+    const workdays: Workday[] = await getUserWorkdays();
+    return { success: true, workdays };
+  } catch (error) {
+    console.error("Server Action Error (getUserWorkdaysAction):", error);
+    return { success: false, error: "Failed to fetch workdays." };
   }
 }
 

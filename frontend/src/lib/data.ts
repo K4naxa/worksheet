@@ -64,11 +64,10 @@ export async function getUserProfile(): Promise<User | null> {
 // Fetches user workdays, tagged for revalidation
 export async function getUserWorkdays(): Promise<Workday[]> {
   try {
-    const profile = await apiFetch("/user/profile", {
+    const workdays = await apiFetch("/workday", {
       next: { tags: ["workdays"] },
     });
-    // Assuming workdays are nested in your profile response
-    return profile?.userWorkdays || [];
+    return workdays || [];
   } catch (error) {
     console.error("Failed to fetch workdays:", error);
     return []; // Return empty array on failure
