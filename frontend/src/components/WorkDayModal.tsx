@@ -187,7 +187,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
         {/* Form Content */}
         <div className="p-6 space-y-6 overflow-y-auto">
           {/* Activities Section */}
-          <div className="space-y-3">
+          <div className="space-y-3 relative pb-3 -mb-3">
             <div className="flex items-center space-x-2">
               <Briefcase className="w-5 h-5 text-muted" />
               <label className="text-primary font-medium">
@@ -205,11 +205,11 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                 }
                 placeholder="Kuvaile päivän pääasialliset aktiviteetit ja tehtävät..."
                 className="input-field resize-none h-24"
+                maxLength={300}
                 required
-                disabled={isLoading}
               />
             ) : (
-              <div className="p-3 rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none">
+              <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
                 {ModalFormData.activities || (
                   <span className="text-muted-foreground">
                     Ei aktiviteetteja.
@@ -217,10 +217,20 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                 )}
               </div>
             )}
+            {isEditing && (
+              <div
+                className="text-right text-xs text-muted absolute right-1 bottom-0"
+                style={
+                  ModalFormData.activities.length == 300 ? { color: "red" } : {}
+                }
+              >
+                {ModalFormData.activities.length} / 300
+              </div>
+            )}
           </div>
 
           {/* Learnings Section */}
-          <div className="space-y-3">
+          <div className="space-y-3 relative pb-3 -mb-3">
             <div className="flex items-center space-x-2">
               <BookOpen className="w-5 h-5 text-muted" />
               <label className="text-primary font-medium">Mitä opit?</label>
@@ -236,16 +246,27 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                 }
                 placeholder="Mitä uusia taitoja, tietoja tai oivalluksia sait?"
                 className="input-field resize-none h-24"
+                maxLength={300}
                 required
-                disabled={isFormDisabled}
+                disabled={isLoading}
               />
             ) : (
-              <div className="p-3 rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none">
-                {ModalFormData.learnings || (
+              <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
+                {ModalFormData.activities || (
                   <span className="text-muted-foreground">
-                    Ei oppimiskokemuksia.
+                    Ei aktiviteetteja.
                   </span>
                 )}
+              </div>
+            )}
+            {isEditing && (
+              <div
+                className="text-right text-xs text-muted absolute right-1 bottom-0"
+                style={
+                  ModalFormData.learnings.length == 300 ? { color: "red" } : {}
+                }
+              >
+                {ModalFormData.learnings.length} / 300
               </div>
             )}
           </div>
