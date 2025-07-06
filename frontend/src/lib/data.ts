@@ -6,9 +6,8 @@ import { RegistrationComplition, User, Workday } from "@/types";
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.accessToken) {
-    // This will be caught by error.tsx boundaries
-    throw new Error("Not authenticated");
+  if (session?.error === "RefreshAccessTokenError" || !session?.accessToken) {
+    return null;
   }
 
   const defaultHeaders = {
@@ -23,6 +22,13 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
       ...options.headers,
     },
   });
+
+  if (response.status === 401 || response.status === 403) {
+    console.warn(
+      `Backend rejected token for ${endpoint}. User is unauthorized.`
+    );
+    return null; // Treat as unauthenticated.
+  }
 
   if (!response.ok) {
     console.error(`API Error: ${response.status} ${response.statusText}`);

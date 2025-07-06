@@ -45,7 +45,10 @@ export async function middleware(req: NextRequest) {
     console.log(
       "🚫 Middleware: No session for protected route, redirecting to login"
     );
-    return NextResponse.redirect(new URL("/login", req.url));
+
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // 3. If session exists but not completed registration
@@ -57,12 +60,6 @@ export async function middleware(req: NextRequest) {
   }
 
   // 4. if session exists and registration is completed
-  if (token && registrationCompleted && isPublicRoute) {
-    console.log(
-      "Middleware: User is authenticated and registered, rerouting to home"
-    );
-    return NextResponse.redirect(new URL("/", req.url));
-  }
 
   console.log("✅ Middleware: Allowing request through");
   return NextResponse.next();
