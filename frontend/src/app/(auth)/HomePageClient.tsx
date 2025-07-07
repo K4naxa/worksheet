@@ -1,31 +1,43 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useTransition,
-  useMemo,
-} from "react";
+import { useState, useEffect, useCallback, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { BarChart3, CalendarDays, Plus, List } from "lucide-react";
 
-// components
-import {
-  Calendar,
-  ConfirmationModal,
-  Statistics,
-  WorkDayModal,
-  WorkDaysList,
-} from "@/components";
-// types
+// Components
+import { Calendar, ConfirmationModal, Statistics, WorkDayModal, WorkDaysList } from "@/components";
+// Types
 import { Workday, WorkStats, WorkPracticeSettings, User } from "@/types";
-// server actions
+// Server Actions
 import { saveWorkdayAction, deleteWorkdayAction } from "@/app/actions";
-// utils
+// Utils
 import { calculateStats } from "@/utils/stats";
-import { BarChart3, CalendarDays, Plus, Settings, List } from "lucide-react";
-import { start } from "repl";
 
+// ============================================================================
+// Constants
+// ============================================================================
+
+/**
+ * Configuration for the main navigation tabs on the home page.
+ */
+const TABS = [
+  { id: "calendar", label: "Kalenteri", icon: CalendarDays },
+  { id: "workdays", label: "Työpäivät", icon: List },
+  { id: "stats", label: "Tilastot", icon: BarChart3 },
+];
+
+// ============================================================================
+// Component
+// ============================================================================
+
+/**
+ * Renders the main client-side interface for the home page.
+ * This component manages all UI state, such as active tabs and modals,
+ * and handles user interactions like creating, editing, and deleting workdays.
+ *
+ * @param {User} initialProfile - The user's profile data, fetched on the server.
+ * @param {Workday[]} initialWorkdays - The user's initial list of workdays, fetched on the server.
+ */
 export function HomePageClient({
   initialProfile,
   initialWorkdays,
@@ -33,45 +45,42 @@ export function HomePageClient({
   initialProfile: User;
   initialWorkdays: Workday[];
 }) {
-  // useTransition is for showing loading states without a full page reload
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
+  // --------------------------------------------------------------------------
+  // Hooks
+  // --------------------------------------------------------------------------
 
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  // --------------------------------------------------------------------------
+  // Props & Derived State
+  // --------------------------------------------------------------------------
+
+  // We use props directly for server data to ensure they are always up-to-date after a `router.refresh()`.
   const profile = initialProfile;
   const workdays = initialWorkdays;
 
-  console.log("initial workdays:", initialWorkdays);
-
-  useEffect(() => {
-    console.log("Profile:", profile);
-    console.log("Workdays:", workdays);
-  }, [profile, workdays]);
-
-  // Initialize stats with default values
-  const [stats, setStats] = useState<WorkStats>({
-    totalDays: 0,
-    totalHours: 0,
-    practiceProgress: 0,
-    mealDistribution: { school: 0, work: 0, other: 0 },
-  });
-
+  /**
+   * Memoized settings derived from the user's profile.
+   * `useMemo` prevents this object from being recreated on every render, which
+   * avoids infinite loops in `useEffect` hooks that depend on it.
+   */
   const settings: WorkPracticeSettings = useMemo(() => {
     return {
       workDays: profile?.workdays || [],
-      startDate: profile?.start_date
-        ? new Date(profile.start_date).toISOString().split("T")[0]
-        : undefined,
-      endDate: profile?.end_date
-        ? new Date(profile.end_date).toISOString().split("T")[0]
-        : undefined,
+      startDate: profile?.start_date ? new Date(profile.start_date).toISOString().split("T")[0] : undefined,
+      endDate: profile?.end_date ? new Date(profile.end_date).toISOString().split("T")[0] : undefined,
     };
   }, [profile]);
 
-  // Local state for modal and settings
-  // This state is used to control the visibility of the modal and its data
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [dateToDelete, setDateToDelete] = useState<string | null>(null);
+  // --------------------------------------------------------------------------
+  // State
+  // --------------------------------------------------------------------------
 
+  /** State to control the currently visible tab ('calendar', 'workdays', or 'stats'). */
+  const [activeTab, setActiveTab] = useState<"calendar" | "workdays" | "stats">("calendar");
+
+  /** State to manage the `WorkDayModal`'s visibility and data. */
   const [modalData, setModalData] = useState<{
     isOpen: boolean;
     selectedDate: string;
@@ -82,35 +91,55 @@ export function HomePageClient({
     existingWorkday: undefined,
   });
 
-  // active tab state
-  // This state is used to control which tab is currently active in the UI
-  const [activeTab, setActiveTab] = useState<"calendar" | "workdays" | "stats">(
-    "calendar"
-  );
+  /** State for the delete confirmation modal. */
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  // Update the stats whenever workdays or settings change
-  // This effect recalculates the statistics based on the current workdays and settings
+  /** State to track which date is pending deletion. */
+  const [dateToDelete, setDateToDelete] = useState<string | null>(null);
+
+  /** State to hold calculated statistics. */
+  const [stats, setStats] = useState<WorkStats>({
+    totalDays: 0,
+    totalHours: 0,
+    practiceProgress: 0,
+    mealDistribution: { school: 0, work: 0, other: 0 },
+  });
+
+  /** Dedicated loading state for the deletion process to provide feedback on the confirmation button. */
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // Effects
+  // --------------------------------------------------------------------------
+
+  /**
+   * Recalculates statistics whenever the list of workdays or user settings change.
+   */
   useEffect(() => {
     setStats(calculateStats(workdays, settings));
   }, [workdays, settings]);
 
-  // This hook is used to manage the scroll behavior of the body
-  // It locks the scroll when either the main modal or the confirmation modal is open
+  /**
+   * Manages the body's scroll lock when any modal is open to prevent background scrolling.
+   */
   useEffect(() => {
-    // If either the main modal OR the confirmation modal is open, lock the scroll.
-    if (modalData.isOpen || showDeleteConfirmation) {
-      document.body.style.overflow = "hidden";
-    } else {
-      // Only unlock if BOTH are closed.
-      document.body.style.overflow = "";
-    }
-
-    // Cleanup function in case the component unmounts while a modal is open.
+    const isModalOpen = modalData.isOpen || showDeleteConfirmation;
+    document.body.style.overflow = isModalOpen ? "hidden" : "";
+    // Cleanup function to reset scroll on component unmount.
     return () => {
       document.body.style.overflow = "";
     };
   }, [modalData.isOpen, showDeleteConfirmation]);
 
+  // --------------------------------------------------------------------------
+  // Modal Handlers
+  // --------------------------------------------------------------------------
+
+  /**
+   * Opens the WorkDayModal with data for a specific date.
+   * @param {string} date - The selected date string (YYYY-MM-DD).
+   * @param {Workday} [workday] - The existing workday data if editing, otherwise undefined.
+   */
   const openModal = useCallback((date: string, workday?: Workday) => {
     setModalData({
       isOpen: true,
@@ -119,16 +148,106 @@ export function HomePageClient({
     });
   }, []);
 
+  /** Closes the WorkDayModal and resets its data. */
   const closeModal = useCallback(() => {
-    setModalData({
-      isOpen: false,
-      selectedDate: "",
-      existingWorkday: undefined,
-    });
+    setModalData({ isOpen: false, selectedDate: "", existingWorkday: undefined });
   }, []);
 
-  // date formatting function to display dates in Finnish format
-  // This function formats a date string into a more readable format for the user
+  // --------------------------------------------------------------------------
+  // Data & Interaction Handlers
+  // --------------------------------------------------------------------------
+
+  /**
+   * Handles selecting a date from the calendar, finding any existing workday
+   * for that date, and opening the modal.
+   * @param {string} date - The selected date string (YYYY-MM-DD).
+   */
+  const handleDateSelect = (date: string) => {
+    const existingWorkday = workdays.find((day) => new Date(day.date).toISOString().split("T")[0] === date);
+    openModal(date, existingWorkday);
+  };
+
+  /**
+   * Handles the "Edit" action from the `WorkDaysList`, opening the modal with the
+   * specified workday's data.
+   * @param {Workday} workday - The workday object to be edited.
+   */
+  const handleEditWorkday = (workday: Workday) => {
+    const formattedDate = new Date(workday.date).toISOString().split("T")[0];
+    openModal(formattedDate, workday);
+  };
+
+  /**
+   * Initiates the delete process by setting the target date and showing the confirmation modal.
+   * @param {string} date - The date of the workday to be deleted.
+   */
+  const handleDeleteRequest = (date: string) => {
+    setDateToDelete(date);
+    setShowDeleteConfirmation(true);
+  };
+
+  // --------------------------------------------------------------------------
+  // Server Action Handlers
+  // --------------------------------------------------------------------------
+
+  /**
+   * Saves or updates a workday by calling a server action.
+   * Closes the modal and refreshes the page data on success.
+   * @param {Workday | CreateWorkDay} workday - The workday data to save.
+   */
+  const handleSaveWorkday = async (workday: any) => {
+    startTransition(async () => {
+      const result = await saveWorkdayAction(workday);
+      if (result.success) {
+        closeModal();
+        router.refresh();
+      } else {
+        console.error("Failed to save workday:", result.error);
+        alert("Työpäivän tallentaminen epäonnistui.");
+      }
+    });
+  };
+
+  /**
+   * Confirms and executes the deletion of a workday via a server action.
+   * It only closes the modals on a successful deletion, providing a better user experience.
+   */
+  const handleDeleteConfirm = async () => {
+    if (!dateToDelete) return;
+
+    setIsDeleting(true);
+
+    try {
+      startTransition(async () => {
+        const result = await deleteWorkdayAction(dateToDelete);
+
+        if (result.success) {
+          router.refresh(); // Refresh data first
+
+          setShowDeleteConfirmation(false);
+        } else {
+          console.error("Error deleting work day:", result.error);
+          alert("Työpäivän poistaminen epäonnistui. Yritä uudelleen.");
+        }
+        setIsDeleting(false);
+      });
+    } finally {
+      setIsDeleting(false);
+      setDateToDelete(null);
+
+      closeModal();
+    }
+  };
+
+  // --------------------------------------------------------------------------
+  // Helper Functions
+  // --------------------------------------------------------------------------
+
+  /**
+   * Formats a date string for display in the UI (e.g., in the delete confirmation modal).
+   * @param {string} dateStr - The date string to format.
+   * @returns {string} A localized, readable date string.
+   */
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("fi-FI", {
       weekday: "long",
@@ -138,88 +257,9 @@ export function HomePageClient({
     });
   };
 
-  // Function to handle saving a workday
-  // This function is called when the user saves a workday from the modal
-  // It uses startTransition to ensure the UI remains responsive while the save operation is in progress
-  const handleSaveWorkday = async (workday: any) => {
-    startTransition(async () => {
-      const result = await saveWorkdayAction(workday);
-      if (result.success) {
-        await router.refresh(); // Refresh the page to get updated data
-
-        closeModal(); // Close the modal after saving
-      } else {
-        console.error("Failed to save workday:", result.error);
-        alert("Työpäivän tallentaminen epäonnistui.");
-      }
-    });
-  };
-
-  // Function to handle the deletion of a workday
-  // This function is called when the user confirms the deletion of a workday
-  // It uses startTransition to ensure the UI remains responsive while the delete operation is in progress
-  const handleDeleteConfirm = async () => {
-    if (!dateToDelete) return;
-
-    try {
-      startTransition(async () => {
-        const result = await deleteWorkdayAction(dateToDelete);
-        if (result.success) {
-          await router.refresh(); // This triggers a soft refresh
-
-          setShowDeleteConfirmation(false);
-        } else {
-          console.error("Error deleting work day:", result.error);
-          alert("Työpäivän poistaminen epäonnistui.");
-        }
-      });
-    } catch (error) {
-      console.error("Error deleting work day:", error);
-      alert("Työpäivän poistaminen epäonnistui.");
-    } finally {
-      closeModal();
-
-      setDateToDelete(null); // Clear the date after deletion
-    }
-  };
-
-  // Function handles the request to delete a workday
-  // It opens a confirmation modal to confirm the deletion
-  const handleDeleteRequest = (date: string) => {
-    console.log("Request to delete date:", date);
-    setDateToDelete(date); // Store the date we're about to delete
-    setShowDeleteConfirmation(true); // Open the confirmation modal
-  };
-
-  // Function to handle date selection from the calendar
-  // This function is called when a user selects a date from the calendar
-  const handleDateSelect = (date: string) => {
-    const formattedDate = new Date(date).toISOString().split("T")[0];
-    const existingWorkday = workdays.find(
-      (day) => new Date(day.date).toISOString().split("T")[0] === formattedDate
-    );
-
-    openModal(formattedDate, existingWorkday);
-    console.log("existing workday:", existingWorkday);
-    console.log("Selected date:", formattedDate);
-  };
-
-  // Function to handle editing an existing workday
-  // This function is called when a user clicks to edit a workday from the list
-  const handleEditWorkday = (workday: Workday) => {
-    const formattedDate = new Date(workday.date).toISOString().split("T")[0];
-
-    console.log("Selected date:", formattedDate);
-    console.log("existing workday:", workday);
-
-    openModal(formattedDate, workday);
-  };
-
-  const tabs = [
-    { id: "calendar", label: "Kalenteri", icon: CalendarDays },
-    { id: "workdays", label: "Työpäivät", icon: List },
-    { id: "stats", label: "Tilastot", icon: BarChart3 },
-  ];
+  // --------------------------------------------------------------------------
+  // Render
+  //
 
   return (
     <div className="">
@@ -231,7 +271,7 @@ export function HomePageClient({
           <div className="flex items-center space-x-4">
             <div className="glass-card rounded-2xl p-2">
               <div className="flex space-x-2">
-                {tabs.map((tab) => {
+                {TABS.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
@@ -275,9 +315,7 @@ export function HomePageClient({
                   onClick={() => {
                     const todayDate = new Date().toISOString().split("T")[0];
                     const existingWorkday = workdays.find(
-                      (day) =>
-                        new Date(day.date).toISOString().split("T")[0] ===
-                        todayDate
+                      (day) => new Date(day.date).toISOString().split("T")[0] === todayDate
                     );
                     setModalData({
                       isOpen: true,
@@ -292,14 +330,9 @@ export function HomePageClient({
                 </button>
 
                 <div className="glass-card rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-primary mb-4">
-                    Pikavinkit
-                  </h3>
+                  <h3 className="text-lg font-semibold text-primary mb-4">Pikavinkit</h3>
                   <ul className="space-y-2 text-secondary text-sm">
-                    <li>
-                      • Klikkaa mitä tahansa päivää lisätäksesi tai nähdäksesi
-                      työn tiedot
-                    </li>
+                    <li>• Klikkaa mitä tahansa päivää lisätäksesi tai nähdäksesi työn tiedot</li>
                     <li>• Vihreät päivät näyttävät suoritetut työpäivät</li>
                     <li>• Seuraa edistymistäsi Tilastot-välilehdessä</li>
                     <li>• Määritä harjoittelun ajankohtaa Profiili sivulla</li>
@@ -311,18 +344,14 @@ export function HomePageClient({
 
           {activeTab === "workdays" && (
             <div className="max-w-4xl mx-auto">
-              <WorkDaysList
-                workDays={workdays}
-                onEdit={handleEditWorkday}
-                onDelete={handleDeleteRequest}
-              />
+              <WorkDaysList workDays={workdays} onEdit={handleEditWorkday} onDelete={handleDeleteRequest} />
             </div>
           )}
 
           {activeTab === "stats" && <Statistics stats={stats} />}
         </div>
 
-        {/* Work Day Modal */}
+        {/* Modals */}
         <WorkDayModal
           modalData={modalData}
           onClose={closeModal}
@@ -337,15 +366,11 @@ export function HomePageClient({
           onConfirm={handleDeleteConfirm}
           message={
             <div>
-              <p className="text-center text-lg">
-                Oletko varma, että haluat poistaa työpäivän:
-              </p>
+              <p className="text-center text-lg">Oletko varma, että haluat poistaa työpäivän:</p>
               <p className="text-center font-bold text-primary text-xl my-3 bg-white/10 p-3 rounded-lg">
                 {dateToDelete ? formatDate(dateToDelete) : ""}
               </p>
-              <p className="text-center text-sm text-muted-foreground">
-                Tätä toimintoa ei voi peruuttaa.
-              </p>
+              <p className="text-center text-sm text-muted-foreground">Tätä toimintoa ei voi peruuttaa.</p>
             </div>
           }
           title="Poista työpäivä"
