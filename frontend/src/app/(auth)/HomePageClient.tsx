@@ -145,8 +145,9 @@ export function HomePageClient({
     startTransition(async () => {
       const result = await saveWorkdayAction(workday);
       if (result.success) {
+        await router.refresh(); // Refresh the page to get updated data
+
         closeModal(); // Close the modal after saving
-        router.refresh(); // Refresh the page to get updated data
       } else {
         console.error("Failed to save workday:", result.error);
         alert("Työpäivän tallentaminen epäonnistui.");
@@ -159,17 +160,27 @@ export function HomePageClient({
   // It uses startTransition to ensure the UI remains responsive while the delete operation is in progress
   const handleDeleteConfirm = async () => {
     if (!dateToDelete) return;
-    startTransition(async () => {
-      const result = await deleteWorkdayAction(dateToDelete);
-      if (result.success) {
-        setShowDeleteConfirmation(false);
-        closeModal();
-        router.refresh(); // This triggers a soft refresh
-      } else {
-        console.error("Error deleting work day:", result.error);
-        alert("Työpäivän poistaminen epäonnistui.");
-      }
-    });
+
+    try {
+      startTransition(async () => {
+        const result = await deleteWorkdayAction(dateToDelete);
+        if (result.success) {
+          await router.refresh(); // This triggers a soft refresh
+
+          setShowDeleteConfirmation(false);
+        } else {
+          console.error("Error deleting work day:", result.error);
+          alert("Työpäivän poistaminen epäonnistui.");
+        }
+      });
+    } catch (error) {
+      console.error("Error deleting work day:", error);
+      alert("Työpäivän poistaminen epäonnistui.");
+    } finally {
+      closeModal();
+
+      setDateToDelete(null); // Clear the date after deletion
+    }
   };
 
   // Function handles the request to delete a workday
