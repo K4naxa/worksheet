@@ -1,35 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  X,
-  Save,
-  MapPin,
-  BookOpen,
-  Briefcase,
-  Clock,
-  Edit,
-  AlertCircle,
-  Trash,
-  Trash2,
-} from "lucide-react";
-
+import { X, Save, MapPin, BookOpen, Briefcase, Clock, Edit, AlertCircle, Trash2 } from "lucide-react";
 import { CreateWorkDay, Workday } from "@/types";
-import { useModalEffects } from "../hooks/useModalEffect";
 
-interface WorkDayModalProps {
-  modalData: {
-    isOpen: boolean;
-    selectedDate: string;
-    existingWorkday?: Workday;
-  };
-  onClose: () => void;
-  // onSave now returns a Promise, allowing us to await its completion.
-  onSave: (workDayDto: CreateWorkDay) => Promise<void>;
-  onDeleteRequest?: (date: string) => void;
-}
+// ============================================================================
+// Constants
+// ============================================================================
 
-// Correct meal location options to match Prisma Enum
+/**
+ * Defines the available meal location options for the form.
+ * This is kept outside the component as it's static data.
+ */
 const MEAL_LOCATION_OPTIONS: {
   value: "school" | "work" | "other";
   label: string;
@@ -40,67 +22,111 @@ const MEAL_LOCATION_OPTIONS: {
   { value: "other", label: "Muu", icon: "🍽️" },
 ];
 
+/**
+ * The initial, empty state for a new workday entry.
+ * Used to reset the form.
+ */
+const INITIAL_FORM_STATE: CreateWorkDay = {
+  date: "",
+  activities: "",
+  learnings: "",
+  hours: 8,
+  mealLocation: "work",
+  mealLocationOther: "",
+};
+
+// ============================================================================
+// Component
+// ============================================================================
+
+interface WorkDayModalProps {
+  modalData: {
+    isOpen: boolean;
+    selectedDate: string;
+    existingWorkday?: Workday;
+  };
+  onClose: () => void;
+  onSave: (workDayDto: CreateWorkDay) => Promise<void>;
+  onDeleteRequest?: (date: string) => void;
+}
+
+/**
+ * A modal component for creating, viewing, and editing a single workday entry.
+ * It operates in two modes: 'view' for existing entries and 'edit' for creating or modifying entries.
+ */
 export const WorkDayModal: React.FC<WorkDayModalProps> = ({
   modalData: { isOpen, selectedDate, existingWorkday },
   onClose,
   onSave,
   onDeleteRequest,
 }) => {
-  // State for form fields
+  // --------------------------------------------------------------------------
+  // State
+  // --------------------------------------------------------------------------
 
-  const [ModalFormData, setModalFormData] = useState<Workday | CreateWorkDay>({
-    date: selectedDate,
-    activities: "",
-    learnings: "",
-    hours: 8,
-    mealLocation: "work",
-    mealLocationOther: "",
-  });
-  // State for modal behavior
+  /** The main state for all form fields. It holds either a full `Workday` or a `CreateWorkDay` object. */
+  const [formData, setFormData] = useState<Workday | CreateWorkDay>(existingWorkday || { ...INITIAL_FORM_STATE });
+
+  /** Controls whether the form fields are editable or in a read-only view. */
   const [isEditing, setIsEditing] = useState(false);
+
+  /** Manages the loading state during async operations like saving. */
   const [isLoading, setIsLoading] = useState(false);
+
+  /** Stores any validation or submission error messages to be displayed to the user. */
   const [error, setError] = useState<string | null>(null);
 
-  // Effect to populate form when modal opens or existingWorkDay changes
+  // --------------------------------------------------------------------------
+  // Derived State
+  // --------------------------------------------------------------------------
+
+  /** A boolean flag to conveniently disable form elements during loading or when not in edit mode. */
+  const isFormDisabled = !isEditing || isLoading;
+
+  /** A boolean flag that determines if the 'Save' button should be enabled based on required fields. */
+  const isSaveDisabled =
+    !formData.activities.trim() ||
+    !formData.learnings.trim() ||
+    formData.hours <= 0 ||
+    (formData.mealLocation === "other" && !formData.mealLocationOther?.trim()) ||
+    isLoading;
+
+  // --------------------------------------------------------------------------
+  // Effects
+  // --------------------------------------------------------------------------
+
+  /**
+   * Synchronizes the modal's internal state when it's opened or when the selected data changes.
+   * This effect acts as the single source of truth for initializing the form.
+   */
   useEffect(() => {
-    // This effect synchronizes the modal's internal state with its props.
-    // It's the "source of truth" for what the form should display.
+    if (isOpen) {
+      setError(null);
+      setIsLoading(false);
 
-    console.log("Syncing form state for date:", selectedDate);
-
-    setError(null);
-    setIsLoading(false);
-
-    if (existingWorkday) {
-      // We have an existing workday, so populate the form and set to view mode.
-      setModalFormData(existingWorkday);
-      setIsEditing(false);
-    } else {
-      // This is a new entry, so reset the form to its default state and set to edit mode.
-      setModalFormData({
-        id: "",
-        date: selectedDate,
-        activities: "",
-        learnings: "",
-        hours: 8,
-        mealLocation: "work",
-        mealLocationOther: "",
-      });
-      setIsEditing(true);
+      if (existingWorkday) {
+        // If an existing workday is provided, populate the form with its data and start in view mode.
+        setFormData(existingWorkday);
+        setIsEditing(false);
+      } else {
+        // If no workday is provided, this is a new entry. Reset to a clean slate and start in edit mode.
+        setFormData({ ...INITIAL_FORM_STATE, date: selectedDate });
+        setIsEditing(true);
+      }
     }
-  }, [existingWorkday, selectedDate]);
+  }, [isOpen, existingWorkday, selectedDate]);
 
-  useModalEffects(isOpen, onClose);
+  // --------------------------------------------------------------------------
+  // Handlers
+  // --------------------------------------------------------------------------
 
+  /**
+   * Handles the form submission. It performs client-side validation,
+   * constructs the data transfer object (DTO), and calls the `onSave` prop.
+   */
   const handleSave = async () => {
-    // Basic client-side validation
-    if (
-      !ModalFormData.activities.trim() ||
-      !ModalFormData.learnings.trim() ||
-      (ModalFormData.mealLocation === "other" &&
-        !ModalFormData.mealLocationOther?.trim()) ||
-      ModalFormData.hours <= 0
-    ) {
+    // Client-side validation is already handled by `isSaveDisabled`, but an extra check is good practice.
+    if (isSaveDisabled) {
       setError("Täytä kaikki pakolliset kentät.");
       return;
     }
@@ -108,32 +134,35 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
     setIsLoading(true);
     setError(null);
 
-    // Construct the DTO for the API call
+    // Construct the DTO to ensure only necessary fields are sent to the server.
     const workDayDto: CreateWorkDay = {
       date: selectedDate,
-      activities: ModalFormData.activities.trim(),
-      learnings: ModalFormData.learnings.trim(),
-      hours: ModalFormData.hours,
-      mealLocation: ModalFormData.mealLocation,
-      // Only include mealLocationOther if mealLocation is 'other'
-      ...(ModalFormData.mealLocation === "other" && {
-        mealLocationOther: ModalFormData.mealLocationOther?.trim(),
-      }),
+      activities: formData.activities.trim(),
+      learnings: formData.learnings.trim(),
+      hours: formData.hours,
+      mealLocation: formData.mealLocation,
+      ...(formData.mealLocation === "other" && { mealLocationOther: formData.mealLocationOther?.trim() }),
     };
 
     try {
       await onSave(workDayDto);
-      onClose(); // Close the modal only on success
+      // The `onClose` is intentionally omitted here; the parent component should close the modal on success.
     } catch (err) {
-      // Display error message from the API call
-      setError(
-        err instanceof Error ? err.message : "Tuntematon virhe tallennuksessa."
-      );
+      setError(err instanceof Error ? err.message : "Tuntematon virhe tallennuksessa.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // --------------------------------------------------------------------------
+  // Helper Functions
+  // --------------------------------------------------------------------------
+
+  /**
+   * Formats a date string into a localized, human-readable format.
+   * @param {string} dateStr - The date string to format (YYYY-MM-DD).
+   * @returns {string} The formatted date.
+   */
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("fi-FI", {
       weekday: "long",
@@ -143,7 +172,9 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
     });
   };
 
-  const isFormDisabled = !isEditing || isLoading;
+  // --------------------------------------------------------------------------
+  // Render
+  // --------------------------------------------------------------------------
 
   if (!isOpen) return null;
 
@@ -152,17 +183,13 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
       <div className="glass-card  rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 p-6 border-b border-white/20 flex-shrink-0">
-          {/* Left side: Title and Date */}
           <div>
             <h2 className="text-xl font-bold text-primary">
               {existingWorkday ? "Työpäivän tiedot" : "Lisää uusi työpäivä"}
             </h2>
             <p className="text-sm text-muted">{formatDate(selectedDate)}</p>
           </div>
-
-          {/* Right side: Action Buttons */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Edit Button: Shown when viewing an existing entry and not in edit mode */}
             {existingWorkday && !isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
@@ -173,13 +200,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                 <span className="hidden sm:inline">Muokkaa</span>
               </button>
             )}
-
-            {/* Close Button: Always visible */}
-            <button
-              onClick={onClose}
-              className="btn-secondary space-x-1"
-              aria-label="Sulje modaali"
-            >
+            <button onClick={onClose} className="btn-secondary p-2.5" aria-label="Sulje modaali">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -191,16 +212,14 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
           <div className="space-y-3 relative pb-3 -mb-3">
             <div className="flex items-center space-x-2">
               <Briefcase className="w-5 h-5 text-muted" />
-              <label className="text-primary font-medium">
-                Mitä teit tänään?
-              </label>
+              <label className="text-primary font-medium">Mitä teit tänään?</label>
             </div>
             {isEditing ? (
               <textarea
-                value={ModalFormData.activities}
+                value={formData.activities}
                 onChange={(e) =>
-                  setModalFormData({
-                    ...ModalFormData,
+                  setFormData({
+                    ...formData,
                     activities: e.target.value,
                   })
                 }
@@ -211,21 +230,15 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               />
             ) : (
               <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
-                {ModalFormData.activities || (
-                  <span className="text-muted-foreground">
-                    Ei aktiviteetteja.
-                  </span>
-                )}
+                {formData.activities || <span className="text-muted-foreground">Ei aktiviteetteja.</span>}
               </div>
             )}
             {isEditing && (
               <div
                 className="text-right text-xs text-muted absolute right-1 bottom-0"
-                style={
-                  ModalFormData.activities.length == 300 ? { color: "red" } : {}
-                }
+                style={formData.activities.length == 300 ? { color: "red" } : {}}
               >
-                {ModalFormData.activities.length} / 300
+                {formData.activities.length} / 300
               </div>
             )}
           </div>
@@ -238,10 +251,10 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
             </div>
             {isEditing ? (
               <textarea
-                value={ModalFormData.learnings}
+                value={formData.learnings}
                 onChange={(e) =>
-                  setModalFormData({
-                    ...ModalFormData,
+                  setFormData({
+                    ...formData,
                     learnings: e.target.value,
                   })
                 }
@@ -253,21 +266,15 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               />
             ) : (
               <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
-                {ModalFormData.learnings || (
-                  <span className="text-muted-foreground">
-                    Ei aktiviteetteja.
-                  </span>
-                )}
+                {formData.learnings || <span className="text-muted-foreground">Ei aktiviteetteja.</span>}
               </div>
             )}
             {isEditing && (
               <div
                 className="text-right text-xs text-muted absolute right-1 bottom-0"
-                style={
-                  ModalFormData.learnings.length == 300 ? { color: "red" } : {}
-                }
+                style={formData.learnings.length == 300 ? { color: "red" } : {}}
               >
-                {ModalFormData.learnings.length} / 300
+                {formData.learnings.length} / 300
               </div>
             )}
           </div>
@@ -286,10 +293,10 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                     min="0.25"
                     max="10"
                     step="0.25"
-                    value={ModalFormData.hours}
+                    value={formData.hours}
                     onChange={(e) =>
-                      setModalFormData({
-                        ...ModalFormData,
+                      setFormData({
+                        ...formData,
                         hours: parseFloat(e.target.value),
                       })
                     }
@@ -303,24 +310,18 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-md px-3 py-1.5 w-28 flex flex-col justify-start text-start text-primary">
-                  <span>{`${Math.floor(ModalFormData.hours)} tuntia`}</span>
-                  <span>
-                    {` ${Math.round((ModalFormData.hours % 1) * 60)} min`}
-                  </span>
+                  <span>{`${Math.floor(formData.hours)} tuntia`}</span>
+                  <span>{` ${Math.round((formData.hours % 1) * 60)} min`}</span>
                 </div>
               </div>
             ) : (
               <div className="p-3 rounded-lg bg-white/5 text-secondary">
-                {ModalFormData.hours > 0 ? (
+                {formData.hours > 0 ? (
                   <>
                     {" "}
-                    <span>{`${Math.floor(ModalFormData.hours)} tuntia`}</span>
-                    {(ModalFormData.hours % 1) * 60 !== 0 && (
-                      <span>
-                        {` ${Math.round(
-                          (ModalFormData.hours % 1) * 60
-                        )} minuuttia`}
-                      </span>
+                    <span>{`${Math.floor(formData.hours)} tuntia`}</span>
+                    {(formData.hours % 1) * 60 !== 0 && (
+                      <span>{` ${Math.round((formData.hours % 1) * 60)} minuuttia`}</span>
                     )}
                   </>
                 ) : (
@@ -343,13 +344,13 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                     key={option.value}
                     type="button"
                     onClick={() =>
-                      setModalFormData({
-                        ...ModalFormData,
+                      setFormData({
+                        ...formData,
                         mealLocation: option.value,
                       })
                     }
                     className={`p-3 rounded-xl border-2 transition-all ${
-                      ModalFormData.mealLocation === option.value
+                      formData.mealLocation === option.value
                         ? "border-primary-500 bg-primary-500/20 text-primary"
                         : "border-white/20 glass-card text-secondary glass-card-hover"
                     } `}
@@ -363,13 +364,13 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                     key={option.value}
                     type="button"
                     onClick={() =>
-                      setModalFormData({
-                        ...ModalFormData,
+                      setFormData({
+                        ...formData,
                         mealLocation: option.value,
                       })
                     }
                     className={`p-3 rounded-xl border-2 transition-all ${
-                      ModalFormData.mealLocation === option.value
+                      formData.mealLocation === option.value
                         ? "border-primary-500 bg-primary-500/20 text-primary"
                         : " border-transparent bg-white/5 text-secondary"
                     } `}
@@ -382,14 +383,14 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               )}
             </div>
 
-            {ModalFormData.mealLocation === "other" &&
+            {formData.mealLocation === "other" &&
               (isEditing ? (
                 <input
                   type="text"
-                  value={ModalFormData.mealLocationOther || ""}
+                  value={formData.mealLocationOther || ""}
                   onChange={(e) =>
-                    setModalFormData({
-                      ...ModalFormData,
+                    setFormData({
+                      ...formData,
                       mealLocationOther: e.target.value,
                     })
                   }
@@ -399,7 +400,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                 />
               ) : (
                 <div className="p-3 rounded-lg bg-white/5 text-secondary">
-                  {ModalFormData.mealLocationOther || "Ei määritelty."}
+                  {formData.mealLocationOther || "Ei määritelty."}
                 </div>
               ))}
           </div>
@@ -425,21 +426,12 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                     </button>
                   )}
                   <div className="flex  gap-4 flex-wrap ml-auto">
-                    <button
-                      onClick={onClose}
-                      className="btn-secondary"
-                      disabled={isLoading}
-                    >
+                    <button onClick={onClose} className="btn-secondary" disabled={isLoading}>
                       Peruuta
                     </button>
                     <button
                       onClick={handleSave}
-                      disabled={
-                        !ModalFormData.activities.trim() ||
-                        !ModalFormData.learnings.trim() ||
-                        ModalFormData.hours <= 0 ||
-                        isLoading
-                      }
+                      disabled={isSaveDisabled}
                       className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center "
                     >
                       {isLoading ? (
