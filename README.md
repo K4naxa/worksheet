@@ -99,12 +99,10 @@ Clone both the frontend and backend repositories to your local machine.
 
 ```bash
 # Clone the frontend
-git clone <your-frontend-repo-url>
+git clone your-repo-fork-url
 cd frontend
 
-# Clone the backend (in a separate terminal or directory)
-git clone <your-backend-repo-url>
-cd backend
+
 ```
 
 ### 2. Set Up Keycloak & Database with Docker

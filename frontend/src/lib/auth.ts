@@ -34,7 +34,7 @@ const fetchRegistrationStatus = async (token: string): Promise<boolean> => {
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    const tokenUrl = `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`;
+    const tokenUrl = `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`;
 
     // The data for the request needs to be in x-www-form-urlencoded format
     const params = new URLSearchParams();
@@ -75,7 +75,7 @@ export const authOptions: AuthOptions = {
     KeycloackProvider({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
-      issuer: `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.KEYCLOAK_REALM}`,
+      issuer: `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`,
     }),
   ],
 

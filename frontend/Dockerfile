@@ -16,6 +16,24 @@ RUN npm install
 # Copy the rest of the application source code
 COPY . .
 
+# --- Define ALL Build-Time Arguments ---
+# These will be passed in from our prod.env file
+ARG NEXT_PUBLIC_KEYCLOAK_URL
+ARG NEXT_PUBLIC_KEYCLOAK_REALM
+ARG NEXTAUTH_URL
+ARG KEYCLOAK_ISSUER
+ARG KEYCLOAK_AUTH_URL
+ARG BACKEND_URL
+
+# --- Set Environment Variables for the Build Process ---
+# This makes the ARG values available to `next build`
+ENV NEXT_PUBLIC_KEYCLOAK_URL=$NEXT_PUBLIC_KEYCLOAK_URL
+ENV NEXT_PUBLIC_KEYCLOAK_REALM=$NEXT_PUBLIC_KEYCLOAK_REALM
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV KEYCLOAK_ISSUER=$KEYCLOAK_ISSUER
+ENV KEYCLOAK_AUTH_URL=$KEYCLOAK_AUTH_URL
+ENV BACKEND_URL=$BACKEND_URL
+
 # Set the NEXT_TELEMETRY_DISABLED environment variable to 1 during the build
 ENV NEXT_TELEMETRY_DISABLED 1
 
