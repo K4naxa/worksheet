@@ -68,7 +68,10 @@ export const Calendar: React.FC<CalendarProps> = ({ userWorkdays, workDays, onDa
    * `useMemo` ensures this Set is only recreated when the `userWorkdays` prop changes.
    */
   const workDayDatesSet = useMemo(
-    () => new Set(userWorkdays.map((day) => new Date(day.date).toISOString().split("T")[0])),
+    () =>
+      new Set(
+        userWorkdays.map((day) => (typeof day.date === "string" ? day.date : day.date.toISOString()).split("T")[0])
+      ),
     [userWorkdays]
   );
 
@@ -94,14 +97,15 @@ export const Calendar: React.FC<CalendarProps> = ({ userWorkdays, workDays, onDa
 
     // Render each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const dayDate = new Date(year, month, day);
+      const dayDate = new Date(Date.UTC(year, month, day));
       const dateStr = dayDate.toISOString().split("T")[0];
 
       const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
 
       const hasWorkDayEntry = workDayDatesSet.has(dateStr);
-      const isScheduledWorkday = workDays.includes(dayDate.getDay());
+      const isScheduledWorkday = workDays.includes(dayDate.getUTCDay());
       const isSelectable = isScheduledWorkday || isToday;
 
       const dayClasses = `
@@ -154,6 +158,18 @@ export const Calendar: React.FC<CalendarProps> = ({ userWorkdays, workDays, onDa
       return newDate;
     });
   }, []);
+
+  /**
+   * formats a day number into a date string (YYYY-MM-DD).
+   * This is used for the `onDateSelect` callback to ensure the date format is consistent.
+   * @param {number} day - The day of the month.
+   */
+  const formatDate = (day: number): string => {
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+    const dayStr = String(day).padStart(2, "0");
+    return `${year}-${month}-${dayStr}`;
+  };
 
   // --------------------------------------------------------------------------
   // Render
