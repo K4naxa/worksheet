@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  AlertOctagon,
-  Briefcase,
-  Calendar,
-  Edit,
-  LinkIcon,
-  OctagonIcon,
-  Save,
-  Settings,
-  User2,
-} from "lucide-react";
+import { AlertOctagon, Briefcase, Calendar, Edit, LinkIcon, OctagonIcon, Save, Settings, User2 } from "lucide-react";
 
 import { useState, useEffect, useTransition } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -18,17 +8,10 @@ import { useRouter } from "next/navigation";
 
 import { ConfirmationModal } from "@/components";
 
-import {
-  updateUserProfileAction,
-  deleteUserAccountAction,
-} from "../../actions";
+import { updateUserProfileAction, deleteUserAccountAction } from "../../actions";
 import { RegistrationComplition, User } from "@/types";
 
-export function ProfilePageClient({
-  initialProfile,
-}: {
-  initialProfile: User;
-}) {
+export function ProfilePageClient({ initialProfile }: { initialProfile: User }) {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -41,18 +24,13 @@ export function ProfilePageClient({
 
   // ** Work Settings States **//
 
-  const [workplaceFormData, setWorkplaceFormData] =
-    useState<RegistrationComplition>({
-      startDate: initialProfile.start_date
-        ? new Date(initialProfile.start_date).toISOString().split("T")[0]
-        : "",
-      endDate: initialProfile.end_date
-        ? new Date(initialProfile.end_date).toISOString().split("T")[0]
-        : "",
-      company: initialProfile.company || "",
-      instructor: initialProfile.instructor || "",
-      workdays: initialProfile.workdays || [],
-    });
+  const [workplaceFormData, setWorkplaceFormData] = useState<RegistrationComplition>({
+    startDate: initialProfile.start_date ? new Date(initialProfile.start_date).toISOString().split("T")[0] : "",
+    endDate: initialProfile.end_date ? new Date(initialProfile.end_date).toISOString().split("T")[0] : "",
+    company: initialProfile.company || "",
+    instructor: initialProfile.instructor || "",
+    workdays: initialProfile.workdays || [],
+  });
 
   // ** Keycloak account management **//
   const keycloakAccountUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/account/`;
@@ -77,8 +55,7 @@ export function ProfilePageClient({
   };
 
   const validateAndSubmit = async () => {
-    const { company, instructor, startDate, endDate, workdays } =
-      workplaceFormData;
+    const { company, instructor, startDate, endDate, workdays } = workplaceFormData;
 
     if (!company.trim()) {
       setError("Yrityksen nimi on pakollinen.");
@@ -130,12 +107,8 @@ export function ProfilePageClient({
     setIsEditing(false);
     setError(null);
     setWorkplaceFormData({
-      startDate: initialProfile.start_date
-        ? new Date(initialProfile.start_date).toISOString().split("T")[0]
-        : "",
-      endDate: initialProfile.end_date
-        ? new Date(initialProfile.end_date).toISOString().split("T")[0]
-        : "",
+      startDate: initialProfile.start_date ? new Date(initialProfile.start_date).toISOString().split("T")[0] : "",
+      endDate: initialProfile.end_date ? new Date(initialProfile.end_date).toISOString().split("T")[0] : "",
       workdays: initialProfile.workdays || [],
       company: initialProfile.company || "",
       instructor: initialProfile.instructor || "",
@@ -179,9 +152,7 @@ export function ProfilePageClient({
           {/* Left side: Title and Date */}
           <div className="flex items-center space-x-2">
             <Settings className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold text-primary">
-              Harjoittelun asetukset
-            </h2>
+            <h2 className="text-xl font-bold text-primary">Harjoittelun asetukset</h2>
           </div>
 
           {/* Right side: Action Buttons */}
@@ -201,11 +172,7 @@ export function ProfilePageClient({
         </div>
 
         {/* Error message */}
-        {error && (
-          <div className="bg-red-500/20 text-red-500 p-2 rounded-b-lg">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-500/20 text-red-500 p-2 rounded-b-lg">{error}</div>}
         <div className="p-6 space-y-6 ">
           {/* Company and Instructor */}
           <div className=" grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -213,9 +180,7 @@ export function ProfilePageClient({
             <div className="">
               <div className="flex items-center space-x-2 mb-1">
                 <Briefcase className="w-4 h-4 text-muted" />
-                <label className="block text-sm text-secondary">
-                  Työn tarjoavan yrityksen nimi:
-                </label>
+                <label className="block text-sm text-secondary">Työn tarjoavan yrityksen nimi:</label>
               </div>
               {isEditing ? (
                 <input
@@ -242,9 +207,7 @@ export function ProfilePageClient({
             <div className="">
               <div className="flex items-center mb-1">
                 <User2 className="w-4 h-4 text-muted" />
-                <label className="block text-sm text-secondary">
-                  Työn ohjaajan nimi:
-                </label>
+                <label className="block text-sm text-secondary">Työn ohjaajan nimi:</label>
               </div>
               {isEditing ? (
                 <input
@@ -271,16 +234,12 @@ export function ProfilePageClient({
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-muted" />
-              <label className="text-primary font-medium">
-                Harjoittelun ajankohta
-              </label>
+              <label className="text-primary font-medium">Harjoittelun ajankohta</label>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm text-secondary mb-1">
-                  Alkupäivä
-                </label>
+                <label className="block text-sm text-secondary mb-1">Alkupäivä</label>
                 {isEditing ? (
                   <input
                     type="date"
@@ -296,14 +255,14 @@ export function ProfilePageClient({
                   />
                 ) : (
                   <p className="text-primary p-3 rounded-lg bg-black/10 min-h-[44px]">
-                    {workplaceFormData.startDate || "Ei määritetty"}
+                    {workplaceFormData.startDate
+                      ? new Date(workplaceFormData.startDate).toLocaleDateString("fi-FI")
+                      : "Ei määritetty"}
                   </p>
                 )}
               </div>
               <div>
-                <label className="block text-sm text-secondary mb-1">
-                  Loppupäivä
-                </label>
+                <label className="block text-sm text-secondary mb-1">Loppupäivä</label>
                 {isEditing ? (
                   <input
                     type="date"
@@ -319,7 +278,9 @@ export function ProfilePageClient({
                   />
                 ) : (
                   <p className="text-primary p-3 rounded-lg bg-black/10 min-h-[44px]">
-                    {workplaceFormData.endDate || "Ei määritetty"}
+                    {workplaceFormData.endDate
+                      ? new Date(workplaceFormData.endDate).toLocaleDateString("fi-FI")
+                      : "Ei määritetty"}
                   </p>
                 )}
               </div>
@@ -328,9 +289,7 @@ export function ProfilePageClient({
 
           {/* Work Days */}
           <div className="space-y-3">
-            <label className="text-primary font-medium">
-              Työpäivät viikossa
-            </label>
+            <label className="text-primary font-medium">Työpäivät viikossa</label>
             <div className="flex gap-2 flex-wrap w-full md:grid grid-cols-7">
               {weekDays.map((day) => (
                 <button
@@ -358,11 +317,7 @@ export function ProfilePageClient({
           <div className="p-6 border-t border-white/20 flex-shrink-0">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex  gap-4 flex-wrap ml-auto">
-                <button
-                  onClick={handleEditingCancel}
-                  className="btn-secondary"
-                  disabled={isEditing ? false : true}
-                >
+                <button onClick={handleEditingCancel} className="btn-secondary" disabled={isEditing ? false : true}>
                   Peruuta
                 </button>
                 <button
@@ -407,15 +362,12 @@ export function ProfilePageClient({
         {/* Add links to change keycloak credentials */}
         <div className="p-6 space-y-4">
           <p className="text-primary ">
-            Yleisten Käyttäjätietojen muokkaus tapahtuu Keycloak välityksellä.{" "}
-            <br />
-            Voit muuttaa esimerkiksi sähköpostiosoitettasi, nimeäsi ja
-            salasanaasi.
+            Yleisten Käyttäjätietojen muokkaus tapahtuu Keycloak välityksellä. <br />
+            Voit muuttaa esimerkiksi sähköpostiosoitettasi, nimeäsi ja salasanaasi.
             <br />
             <br />
             <strong>
-              Huomioithan, että profiilitietojen muutosten päivittymisessä
-              sivulle on noin 5 minuutin viive.
+              Huomioithan, että profiilitietojen muutosten päivittymisessä sivulle on noin 5 minuutin viive.
             </strong>
           </p>
           <div className="space-y-2">
@@ -445,9 +397,8 @@ export function ProfilePageClient({
         {/* Add links to change keycloak credentials */}
         <div className="p-6 space-y-4">
           <p className="text-primary ">
-            Alla olevasta painikkeesta voit poistaa käyttäjäprofiilisi. Tämä
-            poistaa myös kaikki siihen liittyvät tiedot, kuten harjoittelun
-            asetukset ja työpäivät.
+            Alla olevasta painikkeesta voit poistaa käyttäjäprofiilisi. Tämä poistaa myös kaikki siihen liittyvät
+            tiedot, kuten harjoittelun asetukset ja työpäivät.
           </p>
           <div className="space-y-2">
             {/* Todo: Add link to Keycloak user management */}
