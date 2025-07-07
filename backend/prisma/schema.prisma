@@ -54,7 +54,7 @@ model User {
     learnings String
     mealLocation MealLocation // uses MealLocation enum
     mealLocationOther String? // Optional, only if mealLocation is "other"
-    hours Int
+    hours Float
 
     userId String
     user User @relation(fields: [userId], references: [id])

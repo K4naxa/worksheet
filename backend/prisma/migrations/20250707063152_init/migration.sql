@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "MealLocation" AS ENUM ('home', 'work', 'other');
+CREATE TYPE "MealLocation" AS ENUM ('school', 'work', 'other');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -26,7 +26,7 @@ CREATE TABLE "Workday" (
     "learnings" TEXT NOT NULL,
     "mealLocation" "MealLocation" NOT NULL,
     "mealLocationOther" TEXT,
-    "hours" INTEGER NOT NULL,
+    "hours" DOUBLE PRECISION NOT NULL,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3),
