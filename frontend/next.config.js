@@ -1,12 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
-
-const securityHeaders = [
-  {
-    key: "Content-Security-Policy",
-    value: "default-src 'self'; script-src 'self'",
-  },
-];
 
 const withPWA = require("next-pwa")({
   dest: "public",
@@ -15,7 +7,21 @@ const withPWA = require("next-pwa")({
   disable: process.env.NODE_ENV === "development",
 });
 
-module.exports = {
+const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value:
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://auth.pohjosenpaja.fi;",
+  },
+];
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    serverActions: true,
+    proxyTimeout: 20000,
+  },
+
   // Enable header security
   async headers() {
     return [

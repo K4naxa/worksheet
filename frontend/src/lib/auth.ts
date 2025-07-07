@@ -20,14 +20,11 @@ declare module "next-auth" {
 const fetchRegistrationStatus = async (token: string): Promise<boolean> => {
   try {
     console.log("Fetching registration completed status from backend...");
-    const response = await axios.get(
-      `${process.env.BACKEND_URL}/user/registration-status`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.get(`${process.env.BACKEND_URL}/user/registration-status`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data.registrationCompleted as boolean;
   } catch (error) {
     console.error("Error fetching registration status:", error);
@@ -62,10 +59,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
   } catch (error) {
-    console.error(
-      "❌ Error refreshing access token",
-      axios.isAxiosError(error) ? error.response?.data : error
-    );
+    console.error("❌ Error refreshing access token", axios.isAxiosError(error) ? error.response?.data : error);
 
     return {
       ...token,
@@ -76,6 +70,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
   providers: [
     KeycloackProvider({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
@@ -92,9 +87,7 @@ export const authOptions: AuthOptions = {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         // Fetching registration status only on the initial login
-        token.registrationCompleted = (await fetchRegistrationStatus(
-          account.access_token
-        )) as boolean;
+        token.registrationCompleted = (await fetchRegistrationStatus(account.access_token)) as boolean;
 
         if (account.expires_at) {
           token.accessTokenExpires = account.expires_at * 1000;
@@ -120,9 +113,7 @@ export const authOptions: AuthOptions = {
       if (trigger === "update" && token.accessToken) {
         console.log("Updating JWT token with registration status...");
         try {
-          const registrationStatus = await fetchRegistrationStatus(
-            token.accessToken as string
-          );
+          const registrationStatus = await fetchRegistrationStatus(token.accessToken as string);
           token.registrationCompleted = registrationStatus;
         } catch (error) {
           console.error("Error updating registration status in JWT:", error);
@@ -140,8 +131,7 @@ export const authOptions: AuthOptions = {
       // To the session object. This allows us to access the server-side session
       session.accessToken = token.accessToken as string;
       session.user.id = token.sub as string; // Use sub as user ID
-      session.user.registrationCompleted =
-        token.registrationCompleted as boolean;
+      session.user.registrationCompleted = token.registrationCompleted as boolean;
       session.error = token.error as string; // Pass any error from the JWT to the session
 
       return session;
