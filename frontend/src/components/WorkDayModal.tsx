@@ -285,8 +285,17 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               <label className="text-primary font-medium">Työtunnit</label>
             </div>
             {isEditing ? (
-              <div className="flex items-center gap-4">
-                <div className="w-full">
+              <div className="flex items-center gap-4 select-none ">
+                <div
+                  className="w-full"
+                  onMouseDown={(e) => {
+                    // Prevent accidental drag/select when clicking anywhere in the container except the thumb
+                    if (e.target === e.currentTarget) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onDragStart={(e) => e.preventDefault()}
+                >
                   <input
                     type="range"
                     min="0.25"
@@ -308,7 +317,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                     <span>10h</span>
                   </div>
                 </div>
-                <div className="bg-white/10 rounded-md px-3 py-1.5 w-28 flex flex-col justify-start text-start text-primary">
+                <div className="bg-white/10 rounded-md px-3 py-1.5 w-28 flex flex-col justify-start text-start text-primary select-text">
                   <span>{`${Math.floor(formData.hours)} tuntia`}</span>
                   <span>{` ${Math.round((formData.hours % 1) * 60)} min`}</span>
                 </div>
@@ -386,6 +395,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
               (isEditing ? (
                 <input
                   type="text"
+                  maxLength={100}
                   value={formData.mealLocationOther || ""}
                   onChange={(e) =>
                     setFormData({
@@ -398,7 +408,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                   disabled={isFormDisabled}
                 />
               ) : (
-                <div className="p-3 rounded-lg bg-white/5 text-secondary">
+                <div className="p-3 rounded-lg bg-white/5 text-secondary break-words">
                   {formData.mealLocationOther || "Ei määritelty."}
                 </div>
               ))}
