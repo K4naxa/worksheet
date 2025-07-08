@@ -7,8 +7,6 @@ import { OAuthConfig } from "next-auth/providers/oauth";
 declare module "next-auth" {
   interface Session {
     accessToken: string;
-    id_token: string;
-    provider: string;
     error?: string;
     user: {
       id?: string;
@@ -89,22 +87,34 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
-async function doFinalSignoutHandshake(jwt: JWT) {
+async function federatedLogout(jwt: JWT) {
   const { provider, id_token } = jwt;
 
   if (provider == keycloak.id) {
     try {
-      // Add the id_token_hint to the query string
-      const params = new URLSearchParams();
-      params.append("id_token_hint", id_token as string);
+      if (!id_token) {
+        console.warn("Without an id_token the user won't be redirected back from the IdP after logout.");
+        return;
+      }
+
       const issuer =
         keycloak.options?.issuer ?? process.env.KEYCLOAK_AUTH_URL + `/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`;
-      const { status, statusText } = await axios.get(`${issuer}/protocol/openid-connect/logout?${params.toString()}`);
+      const endsessionURL = `${issuer}/protocol/openid-connect/logout`;
+      const endsessionParams = new URLSearchParams({
+        id_token_hint: id_token as string,
+        post_logout_redirect_uri: process.env.NEXTAUTH_URL || "http://localhost:3000",
+      });
 
-      // The response body should contain a confirmation that the user has been logged out
-      console.log("Completed post-logout handshake", status, statusText);
-    } catch (e: any) {
-      console.error("Unable to perform post-logout handshake", (e as AxiosError)?.code || e);
+      // For client-side redirect, we'll return the URL instead of making a server request
+      const logoutUrl = `${endsessionURL}?${endsessionParams}`;
+      console.log("Federated logout URL:", logoutUrl);
+
+      // In a browser environment, redirect to the logout URL
+      if (typeof window !== "undefined") {
+        window.location.href = logoutUrl;
+      }
+    } catch (error) {
+      console.error("Unable to perform federated logout", error);
     }
   }
 }
@@ -121,8 +131,6 @@ export const authOptions: AuthOptions = {
       if (account && account.access_token) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        token.id_token = account.id_token;
-        token.provider = account.provider || "keycloak";
         token.registrationCompleted = (await fetchRegistrationStatus(account.access_token)) as boolean;
 
         if (account.expires_at) {
@@ -167,9 +175,5 @@ export const authOptions: AuthOptions = {
 
       return session;
     },
-  },
-
-  events: {
-    signOut: ({ session, token }) => doFinalSignoutHandshake(token),
   },
 };
