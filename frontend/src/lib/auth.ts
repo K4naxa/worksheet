@@ -87,38 +87,6 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
-async function federatedLogout(jwt: JWT) {
-  const { provider, id_token } = jwt;
-
-  if (provider == keycloak.id) {
-    try {
-      if (!id_token) {
-        console.warn("Without an id_token the user won't be redirected back from the IdP after logout.");
-        return;
-      }
-
-      const issuer =
-        keycloak.options?.issuer ?? process.env.KEYCLOAK_AUTH_URL + `/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`;
-      const endsessionURL = `${issuer}/protocol/openid-connect/logout`;
-      const endsessionParams = new URLSearchParams({
-        id_token_hint: id_token as string,
-        post_logout_redirect_uri: process.env.NEXTAUTH_URL || "http://localhost:3000",
-      });
-
-      // For client-side redirect, we'll return the URL instead of making a server request
-      const logoutUrl = `${endsessionURL}?${endsessionParams}`;
-      console.log("Federated logout URL:", logoutUrl);
-
-      // In a browser environment, redirect to the logout URL
-      if (typeof window !== "undefined") {
-        window.location.href = logoutUrl;
-      }
-    } catch (error) {
-      console.error("Unable to perform federated logout", error);
-    }
-  }
-}
-
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
