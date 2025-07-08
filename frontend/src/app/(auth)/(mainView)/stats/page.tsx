@@ -13,8 +13,8 @@ export default async function StatsPage() {
 
   const settings: WorkPracticeSettings = {
     workDays: profile.workdays || [],
-    startDate: profile.start_date,
-    endDate: profile.end_date,
+    startDate: profile.start_date ? profile.start_date.toISOString() : undefined,
+    endDate: profile.end_date ? profile.end_date.toISOString() : undefined,
   };
 
   const stats = calculateStats(workdays, settings);
