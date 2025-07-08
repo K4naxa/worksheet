@@ -2,7 +2,7 @@
 import React from "react";
 import { Edit, Trash2, BookOpen, Briefcase, Clock, Calendar, Utensils } from "lucide-react";
 import { Workday } from "@/types";
-import { formatDateFinLong } from "@/utils/formatUtils";
+import { formatDate, formatDateFinLong } from "@/utils/formatUtils";
 
 interface WorkDaysListProps {
   workDays: Workday[];
@@ -48,7 +48,10 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
           const minutes = Math.round((workDay.hours % 1) * 60);
 
           return (
-            <div key={workDay.id} className="glass-card rounded-xl p-4 hover:bg-white/15 transition-all">
+            <div
+              key={workDay.id}
+              className="glass-card rounded-xl p-4 hover:bg-white/15 transition-all overflow-hidden"
+            >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-muted" />
@@ -63,7 +66,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
                     <Edit className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => onDelete(new Date(workDay.date).toISOString().split("T")[0])}
+                    onClick={() => onDelete(formatDate(workDay.date))}
                     className="p-1.5 btn-danger glass-card rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors"
                     title="Poista työpäivä"
                   >
@@ -78,7 +81,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
                     <Briefcase className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium text-primary">Aktiviteetit</span>
                   </div>
-                  <p className="text-sm text-secondary line-clamp-3">{workDay.activities}</p>
+                  <p className="text-sm text-secondary line-clamp-3 break-words">{workDay.activities}</p>
                 </div>
 
                 <div className="space-y-2">
@@ -86,7 +89,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
                     <BookOpen className="w-4 h-4 text-success-400" />
                     <span className="text-sm font-medium text-primary">Oppiminen</span>
                   </div>
-                  <p className="text-sm text-secondary line-clamp-3">{workDay.learnings}</p>
+                  <p className="text-sm text-secondary line-clamp-3 break-words">{workDay.learnings}</p>
                 </div>
               </div>
 
@@ -101,7 +104,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
                   </div>
                   <div className="flex items-center space-x-2">
                     <Utensils className="w-4 h-4 text-orange-400" />
-                    <span className="text-sm text-secondary">{mealDisplay.text}</span>
+                    <span className="text-sm text-secondary break-words">{mealDisplay.text}</span>
                   </div>
                 </div>
                 <div className="text-xs text-muted">
