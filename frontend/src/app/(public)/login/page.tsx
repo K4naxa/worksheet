@@ -1,5 +1,6 @@
 import LoginButton from "@/components/LoginButton";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   return (
@@ -18,13 +19,10 @@ export default function LoginPage() {
             height={80} // Specify height
             priority // Add priority=true for images "above the fold" to load them faster
           />
-          <h1 className="text-4xl md:text-5xl font-bold text-primary">
-            Työpäiväkirja
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-primary">Työpäiväkirja</h1>
         </div>
         <p className="text-secondary text-lg max-w-2xl mx-auto">
-          Seuraa päivittäisiä tekemistäsi ja oppimistasi työharjoittelun aikana.{" "}
-          <br />
+          Seuraa päivittäisiä tekemistäsi ja oppimistasi työharjoittelun aikana. <br />
           Saat tietosi talteen ja voit jakaa ne helposti opettajasi kanssa.
         </p>
       </div>
@@ -39,9 +37,7 @@ export default function LoginPage() {
 
       {/* Footer Link (Optional) */}
       <div className="mt-8 text-center">
-        <p className="text-sm text-muted">
-          Tarvitsetko apua? Ota yhteyttä opettajaasi.
-        </p>
+        <p className="text-sm text-muted">Tarvitsetko apua? Ota yhteyttä opettajaasi.</p>
       </div>
     </div>
   );
