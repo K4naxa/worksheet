@@ -52,9 +52,22 @@ export default function TopNavigation({ userProfile }: { userProfile: User }) {
   };
 
   const handleLogout = () => {
-    signOut({ callbackUrl: logoutRedirectUrl, redirect: true });
+    try {
+      const issuerUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`;
+      const logoutUrl = new URL(`${issuerUrl}/protocol/openid-connect/logout`);
+      const postLogoutRedirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}`;
 
-    setShowProfileMenu(false);
+      logoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutRedirectUrl);
+      logoutUrl.searchParams.set("client_id", process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID!);
+
+      signOut({ redirect: false });
+      window.location.href = logoutUrl.toString();
+
+      setShowProfileMenu(false);
+    } catch (error) {
+      console.error("Error logging out:", error);
+      signOut({ callbackUrl: "/" });
+    }
   };
 
   return (
