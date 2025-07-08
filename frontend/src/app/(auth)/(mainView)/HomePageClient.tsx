@@ -23,7 +23,6 @@ import { calculateStats } from "@/utils/stats";
 const TABS = [
   { id: "calendar", label: "Kalenteri", icon: CalendarDays },
   { id: "workdays", label: "Työpäivät", icon: List },
-  { id: "stats", label: "Tilastot", icon: BarChart3 },
 ];
 
 // ============================================================================
@@ -60,25 +59,12 @@ export function HomePageClient({
   const profile = initialProfile;
   const workdays = initialWorkdays;
 
-  /**
-   * Memoized settings derived from the user's profile.
-   * `useMemo` prevents this object from being recreated on every render, which
-   * avoids infinite loops in `useEffect` hooks that depend on it.
-   */
-  const settings: WorkPracticeSettings = useMemo(() => {
-    return {
-      workDays: profile?.workdays || [],
-      startDate: profile?.start_date ? new Date(profile.start_date).toISOString().split("T")[0] : undefined,
-      endDate: profile?.end_date ? new Date(profile.end_date).toISOString().split("T")[0] : undefined,
-    };
-  }, [profile]);
-
   // --------------------------------------------------------------------------
   // State
   // --------------------------------------------------------------------------
 
   /** State to control the currently visible tab ('calendar', 'workdays', or 'stats'). */
-  const [activeTab, setActiveTab] = useState<"calendar" | "workdays" | "stats">("calendar");
+  const [activeTab, setActiveTab] = useState<"calendar" | "workdays">("calendar");
 
   /** State to manage the `WorkDayModal`'s visibility and data. */
   const [modalData, setModalData] = useState<{
@@ -111,13 +97,6 @@ export function HomePageClient({
   // --------------------------------------------------------------------------
   // Effects
   // --------------------------------------------------------------------------
-
-  /**
-   * Recalculates statistics whenever the list of workdays or user settings change.
-   */
-  useEffect(() => {
-    setStats(calculateStats(workdays, settings));
-  }, [workdays, settings]);
 
   /**
    * Manages the body's scroll lock when any modal is open to prevent background scrolling.
@@ -341,14 +320,6 @@ export function HomePageClient({
               </div>
             </div>
           )}
-
-          {activeTab === "workdays" && (
-            <div className="max-w-4xl mx-auto">
-              <WorkDaysList workDays={workdays} onEdit={handleEditWorkday} onDelete={handleDeleteRequest} />
-            </div>
-          )}
-
-          {activeTab === "stats" && <Statistics stats={stats} />}
         </div>
 
         {/* Modals */}

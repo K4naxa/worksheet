@@ -10,10 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   // Fetch data on the server in parallel
-  const [userProfile, userWorkdays] = await Promise.all([
-    getUserProfile(),
-    getUserWorkdays(),
-  ]);
+  const [userProfile, userWorkdays] = await Promise.all([getUserProfile(), getUserWorkdays()]);
 
   // If there's no user profile, the session is likely invalid or user not found.
   // Redirect to login instead of showing a skeleton on the main page.
@@ -22,12 +19,5 @@ export default async function Home() {
   }
 
   // The Server Component's only job is to fetch data and pass it to the Client Component.
-  return (
-    <Suspense fallback={<HomePageSkeleton />}>
-      <HomePageClient
-        initialProfile={userProfile}
-        initialWorkdays={userWorkdays}
-      />
-    </Suspense>
-  );
+  return <HomePageClient initialProfile={userProfile} initialWorkdays={userWorkdays} />;
 }
