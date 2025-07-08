@@ -5,6 +5,7 @@ import { WorkPracticeSettings } from "@/types";
 import { redirect } from "next/navigation";
 import { formatDate } from "@/utils/formatUtils";
 
+export const dynamic = "force-dynamic";
 export default async function StatsPage() {
   const [profile, workdays] = await Promise.all([getUserProfile(), getUserWorkdays()]);
 

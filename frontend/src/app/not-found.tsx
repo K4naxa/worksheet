@@ -30,19 +30,13 @@ export default function NotFound() {
             <AlertTriangle className="h-16 w-16 text-amber-400" />
           </div>
 
-          <h1 className="text-4xl font-bold text-primary mb-4">
-            Sivua ei löytynyt
-          </h1>
+          <h1 className="text-4xl font-bold text-primary mb-4">Sivua ei löytynyt</h1>
 
           <p className="text-secondary text-lg mb-8">
-            Hups! Etsimääsi sivua ei ole olemassa. Se on saattanut siirtyä tai
-            tulla poistetuksi.
+            Hups! Etsimääsi sivua ei ole olemassa. Se on saattanut siirtyä tai tulla poistetuksi.
           </p>
 
-          <Link
-            href="/"
-            className="btn-primary inline-flex items-center space-x-2 text-lg"
-          >
+          <Link href="/" className="btn-primary inline-flex items-center space-x-2 text-lg">
             <Home className="w-5 h-5" />
             <span>Palaa etusivulle</span>
           </Link>

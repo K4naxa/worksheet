@@ -18,7 +18,6 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverActions: true,
     proxyTimeout: 20000,
   },
 
