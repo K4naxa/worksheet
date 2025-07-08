@@ -1,6 +1,6 @@
 import LoginButton from "@/components/LoginButton";
+import { Github } from "lucide-react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   return (
@@ -35,9 +35,21 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Footer Link (Optional) */}
+      {/* Signature */}
       <div className="mt-8 text-center">
-        <p className="text-sm text-muted">Tarvitsetko apua? Ota yhteyttä opettajaasi.</p>
+        <p className="text-sm text-muted">
+          Luoja:
+          <a
+            href="https://github.com/K4naxa"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-2 inline-flex items-center gap-1 font-medium text-primary/80 hover:text-primary transition-colors group"
+          >
+            <Github className="w-4 h-4 transition-transform group-hover:scale-110" />
+
+            <span className="underline underline-offset-4">K4naxa</span>
+          </a>
+        </p>
       </div>
     </div>
   );
