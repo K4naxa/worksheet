@@ -1,5 +1,3 @@
-// app/(auth)/(mainView)/stats/page.tsx
-
 import { getUserProfile, getUserWorkdays } from "@/lib/data";
 import { Statistics } from "@/components";
 import { calculateStats } from "@/utils/stats";

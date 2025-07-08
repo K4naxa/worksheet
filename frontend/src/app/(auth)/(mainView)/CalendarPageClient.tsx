@@ -12,22 +12,7 @@ import { Workday, WorkStats, WorkPracticeSettings, User } from "@/types";
 import { saveWorkdayAction, deleteWorkdayAction } from "@/app/actions";
 // Utils
 import { calculateStats } from "@/utils/stats";
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-/**
- * Configuration for the main navigation tabs on the home page.
- */
-const TABS = [
-  { id: "calendar", label: "Kalenteri", icon: CalendarDays },
-  { id: "workdays", label: "Työpäivät", icon: List },
-];
-
-// ============================================================================
-// Component
-// ============================================================================
+import { formatDateFinLong } from "@/utils/formatUtils";
 
 /**
  * Renders the main client-side interface for the home page.
@@ -62,9 +47,6 @@ export function HomePageClient({
   // --------------------------------------------------------------------------
   // State
   // --------------------------------------------------------------------------
-
-  /** State to control the currently visible tab ('calendar', 'workdays', or 'stats'). */
-  const [activeTab, setActiveTab] = useState<"calendar" | "workdays">("calendar");
 
   /** State to manage the `WorkDayModal`'s visibility and data. */
   const [modalData, setModalData] = useState<{
@@ -219,24 +201,6 @@ export function HomePageClient({
   };
 
   // --------------------------------------------------------------------------
-  // Helper Functions
-  // --------------------------------------------------------------------------
-
-  /**
-   * Formats a date string for display in the UI (e.g., in the delete confirmation modal).
-   * @param {string} dateStr - The date string to format.
-   * @returns {string} A localized, readable date string.
-   */
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("fi-FI", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  // --------------------------------------------------------------------------
   // Render
   //
 
@@ -245,81 +209,48 @@ export function HomePageClient({
       <div className="container mx-auto p-4">
         {/* Header */}
 
-        {/* Navigation Tabs */}
-        <div className="flex justify-center mb-8 ">
-          <div className="flex items-center space-x-4">
-            <div className="glass-card rounded-2xl p-2">
-              <div className="flex space-x-2">
-                {TABS.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      disabled={isPending}
-                      onClick={() => setActiveTab(tab.id as any)}
-                      className={`
-                        flex items-center space-x-1 md:space-x-2 px-4 md:px-6 py-3 rounded-xl font-medium transition-all
-                        ${
-                          activeTab === tab.id
-                            ? "text-white shadow-lg bg-gradient-primary"
-                            : "text-secondary glass-card-hover "
-                        }
-                      `}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span>{tab.label}</span>
-                    </button>
+        {/* Main Content */}
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <Calendar
+                userWorkdays={workdays}
+                workDays={profile.workdays || []}
+                onDateSelect={handleDateSelect}
+                selectedDate={modalData.selectedDate}
+              />
+            </div>
+            <div className="space-y-6">
+              <button
+                disabled={isPending}
+                onClick={() => {
+                  const todayDate = new Date().toISOString().split("T")[0];
+                  const existingWorkday = workdays.find(
+                    (day) => new Date(day.date).toISOString().split("T")[0] === todayDate
                   );
-                })}
+                  setModalData({
+                    isOpen: true,
+                    selectedDate: todayDate,
+                    existingWorkday,
+                  });
+                }}
+                className="w-full p-4 btn-primary flex items-center justify-center space-x-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Lisää tämän päivän työ</span>
+              </button>
+
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Pikavinkit</h3>
+                <ul className="space-y-2 text-secondary text-sm">
+                  <li>• Klikkaa mitä tahansa päivää lisätäksesi tai nähdäksesi työn tiedot</li>
+                  <li>• Vihreät päivät näyttävät suoritetut työpäivät</li>
+                  <li>• Seuraa edistymistäsi Tilastot-välilehdessä</li>
+                  <li>• Määritä harjoittelun ajankohtaa Profiili sivulla</li>
+                </ul>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto">
-          {activeTab === "calendar" && (
-            <div className="grid lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <Calendar
-                  userWorkdays={workdays}
-                  workDays={profile.workdays || []}
-                  onDateSelect={handleDateSelect}
-                  selectedDate={modalData.selectedDate}
-                />
-              </div>
-              <div className="space-y-6">
-                <button
-                  disabled={isPending}
-                  onClick={() => {
-                    const todayDate = new Date().toISOString().split("T")[0];
-                    const existingWorkday = workdays.find(
-                      (day) => new Date(day.date).toISOString().split("T")[0] === todayDate
-                    );
-                    setModalData({
-                      isOpen: true,
-                      selectedDate: todayDate,
-                      existingWorkday,
-                    });
-                  }}
-                  className="w-full p-4 btn-primary flex items-center justify-center space-x-2"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Lisää tämän päivän työ</span>
-                </button>
-
-                <div className="glass-card rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-primary mb-4">Pikavinkit</h3>
-                  <ul className="space-y-2 text-secondary text-sm">
-                    <li>• Klikkaa mitä tahansa päivää lisätäksesi tai nähdäksesi työn tiedot</li>
-                    <li>• Vihreät päivät näyttävät suoritetut työpäivät</li>
-                    <li>• Seuraa edistymistäsi Tilastot-välilehdessä</li>
-                    <li>• Määritä harjoittelun ajankohtaa Profiili sivulla</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Modals */}
@@ -339,7 +270,7 @@ export function HomePageClient({
             <div>
               <p className="text-center text-lg">Oletko varma, että haluat poistaa työpäivän:</p>
               <p className="text-center font-bold text-primary text-xl my-3 bg-white/10 p-3 rounded-lg">
-                {dateToDelete ? formatDate(dateToDelete) : ""}
+                {dateToDelete ? formatDateFinLong(dateToDelete) : ""}
               </p>
               <p className="text-center text-sm text-muted-foreground">Tätä toimintoa ei voi peruuttaa.</p>
             </div>

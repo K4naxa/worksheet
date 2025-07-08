@@ -44,6 +44,7 @@ interface WorkDayModalProps {
     isOpen: boolean;
     selectedDate: string;
     existingWorkday?: Workday;
+    isEditing?: boolean; // Optional flag to indicate if the modal is in edit mode
   };
   onClose: () => void;
   onSave: (workDayDto: CreateWorkDay) => Promise<void>;
@@ -55,7 +56,7 @@ interface WorkDayModalProps {
  * It operates in two modes: 'view' for existing entries and 'edit' for creating or modifying entries.
  */
 export const WorkDayModal: React.FC<WorkDayModalProps> = ({
-  modalData: { isOpen, selectedDate, existingWorkday },
+  modalData: { isOpen, selectedDate, existingWorkday, isEditing: initialIsEditing },
   onClose,
   onSave,
   onDeleteRequest,
@@ -68,7 +69,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
   const [formData, setFormData] = useState<Workday | CreateWorkDay>(existingWorkday || { ...INITIAL_FORM_STATE });
 
   /** Controls whether the form fields are editable or in a read-only view. */
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialIsEditing || !existingWorkday);
 
   /** Manages the loading state during async operations like saving. */
   const [isLoading, setIsLoading] = useState(false);
@@ -105,16 +106,14 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
       setIsLoading(false);
 
       if (existingWorkday) {
-        // If an existing workday is provided, populate the form with its data and start in view mode.
         setFormData(existingWorkday);
-        setIsEditing(false);
+        setIsEditing(initialIsEditing ?? false); // Use the prop!
       } else {
-        // If no workday is provided, this is a new entry. Reset to a clean slate and start in edit mode.
         setFormData({ ...INITIAL_FORM_STATE, date: selectedDate });
         setIsEditing(true);
       }
     }
-  }, [isOpen, existingWorkday, selectedDate]);
+  }, [isOpen, existingWorkday, selectedDate, initialIsEditing]);
 
   // --------------------------------------------------------------------------
   // Handlers

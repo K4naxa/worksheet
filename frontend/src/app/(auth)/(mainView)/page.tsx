@@ -1,5 +1,5 @@
 import { getUserProfile, getUserWorkdays } from "@/lib/data";
-import { HomePageClient } from "./HomePageClient";
+import { HomePageClient } from "./CalendarPageClient";
 import { HomePageSkeleton } from "@/components/skeletons/HomePageSkeleton";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
