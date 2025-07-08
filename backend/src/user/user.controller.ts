@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Post } from '@nestjs/common';
 import { AuthenticatedUser } from 'nest-keycloak-connect';
-import { Registration } from 'src/types/import.types';
 import { KeycloakProfile } from 'src/types/keycloack.types';
+import { RegistrationFormDto } from 'src/user/user.dto';
 import { UserService } from 'src/user/user.service';
 
 @Controller('user')
@@ -21,7 +21,7 @@ export class UserController {
   @Post('register')
   registerUser(
     @AuthenticatedUser() user: KeycloakProfile,
-    @Body() body: Registration,
+    @Body() body: RegistrationFormDto,
   ) {
     return this.userService.registerUser(user, body);
   }

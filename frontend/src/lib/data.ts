@@ -24,23 +24,27 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   });
 
   if (response.status === 401 || response.status === 403) {
-    console.warn(
-      `Backend rejected token for ${endpoint}. User is unauthorized.`
-    );
+    console.warn(`Backend rejected token for ${endpoint}. User is unauthorized.`);
     return null; // Treat as unauthenticated.
   }
 
   if (!response.ok) {
+    let errorBody: any;
+    try {
+      errorBody = await response.json();
+    } catch (e) {
+      errorBody = null; // If parsing fails, we just log the status
+    }
+
     console.error(`API Error: ${response.status} ${response.statusText}`);
     // You might want to parse the error body for more details
-    throw new Error(`Failed to fetch API: ${response.status}`);
+    throw new Error(
+      errorBody.message || (Array.isArray(errorBody.message) ? errorBody.message.join(", ") : JSON.stringify(errorBody))
+    );
   }
 
   // Handle empty responses for DELETE/204 cases
-  if (
-    response.status === 204 ||
-    response.headers.get("Content-Length") === "0"
-  ) {
+  if (response.status === 204 || response.headers.get("Content-Length") === "0") {
     return null;
   }
 

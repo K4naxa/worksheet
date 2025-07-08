@@ -46,9 +46,7 @@ export async function getUserWorkdaysAction() {
 }
 
 // ** Profile page actions **
-export async function updateUserProfileAction(
-  profileData: RegistrationComplition
-) {
+export async function updateUserProfileAction(profileData: RegistrationComplition) {
   try {
     await updateUserProfileOnServer(profileData);
 

@@ -6,25 +6,32 @@ import { signOut } from "next-auth/react";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { User } from "@/types";
 
-export default function RegisterPageClient({
-  userProfile,
-}: {
-  userProfile: User;
-}) {
+// ============================================================================
+// Constants
+// ============================================================================
+
+interface FormData {
+  company: string;
+  instructor: string;
+  startDate: string;
+  endDate: string;
+  workdays: number[];
+}
+
+const weekDays = [
+  { value: 1, label: "Maanantai" },
+  { value: 2, label: "Tiistai" },
+  { value: 3, label: "Keskiviikko" },
+  { value: 4, label: "Torstai" },
+  { value: 5, label: "Perjantai" },
+  { value: 6, label: "Lauantai" },
+  { value: 0, label: "Sunnuntai" },
+];
+
+export default function RegisterPageClient({}) {
   const router = useRouter();
   const { update } = useSession();
-
-  const weekDays = [
-    { value: 1, label: "Maanantai" },
-    { value: 2, label: "Tiistai" },
-    { value: 3, label: "Keskiviikko" },
-    { value: 4, label: "Torstai" },
-    { value: 5, label: "Perjantai" },
-    { value: 6, label: "Lauantai" },
-    { value: 0, label: "Sunnuntai" },
-  ];
 
   const handleWorkDayToggle = (dayValue: number) => {
     setFormData((prev) => ({
@@ -34,14 +41,6 @@ export default function RegisterPageClient({
         : [...prev.workdays, dayValue].sort(),
     }));
   };
-
-  interface FormData {
-    company: string;
-    instructor: string;
-    startDate: string;
-    endDate: string;
-    workdays: number[];
-  }
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,10 +59,21 @@ export default function RegisterPageClient({
       setError("Yrityksen nimi on pakollinen.");
       return;
     }
+
+    if (company.length > 100) {
+      setError("Yrityksen nimi ei saa olla yli 100 merkkiä pitkä.");
+      return;
+    }
+
     if (!instructor.trim()) {
       setError("Työn ohjaajan nimi on pakollinen.");
       return;
     }
+    if (instructor.length > 100) {
+      setError("Työn ohjaajan nimi ei saa olla yli 100 merkkiä pitkä.");
+      return;
+    }
+
     if (!startDate) {
       setError("Aloituspäivä on pakollinen.");
       return;
@@ -88,31 +98,17 @@ export default function RegisterPageClient({
     setLoading(true);
     setError(null);
 
-    try {
-      await updateUserProfileAction(formData);
+    const result = await updateUserProfileAction(formData);
 
-      // If registration is successful, update session state
-      // This will trigger a re-render and update the session context
-      await update();
-
-      // Redirect to home page after successful registration
-      console.log(
-        "✅Registration completed successfully, redirecting to home!"
-      );
-      router.push("/");
-      router.refresh();
-    } catch (err) {
-      console.error("Error submitting form:", err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError(
-          "Virhe rekisteröinnissä. Tarkista syötteet ja yritä uudelleen."
-        );
-      }
-    } finally {
+    if (!result.success) {
+      setError(result.error || "Virhe rekisteröinnissä.");
       setLoading(false);
+      return;
     }
+
+    await update();
+    router.push("/");
+    router.refresh();
   };
 
   useEffect(() => {
@@ -127,10 +123,7 @@ export default function RegisterPageClient({
   }, [error]);
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "var(--gradient-background)" }}
-    >
+    <div className="min-h-screen" style={{ background: "var(--gradient-background)" }}>
       <div className="container mx-auto px-4 py-8 text-primary-50">
         {/* Header */}
 
@@ -144,37 +137,28 @@ export default function RegisterPageClient({
                   onClick={() => signOut()}
                 />
 
-                <div className="text-xl font-bold text-center text-primary w-auto mx-4">
-                  Rekisteröi työharjoittelu
-                </div>
+                <div className="text-xl font-bold text-center text-primary w-auto mx-4">Työharjoittelun Tiedot</div>
               </div>
             </div>
 
             {/* Error message */}
 
-            {error && (
-              <div className="bg-red-500/20 text-red-500 p-2 rounded-b-lg">
-                {error}
-              </div>
-            )}
+            {error && <div className="bg-red-500/20 text-red-500 p-2 rounded-b-lg">{error}</div>}
 
             <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
               {/* company Section */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Briefcase className="w-5 h-5 text-muted" />
-                  <label className="text-primary font-medium">
-                    Yrityksen Nimi:
-                  </label>
+                  <label className="text-primary font-medium">Yrityksen Nimi:</label>
                 </div>
                 <input
                   type="text"
                   value={formData.company}
-                  onChange={(e) =>
-                    setFormData({ ...formData, company: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                   placeholder="Työn tarjoavan yrityksen nimi"
                   className="input-field"
+                  maxLength={100} // Limit to 100 characters
                   required
                 />
               </div>
@@ -183,18 +167,15 @@ export default function RegisterPageClient({
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <User2 className="w-5 h-5 text-muted" />
-                  <label className="text-primary font-medium">
-                    Työn ohjaajan nimi:
-                  </label>
+                  <label className="text-primary font-medium">Työn ohjaajan nimi:</label>
                 </div>
                 <input
                   type="text"
                   value={formData.instructor}
-                  onChange={(e) =>
-                    setFormData({ ...formData, instructor: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
                   placeholder="Sinua ohjaavan henkilön nimi"
                   className="input-field"
+                  maxLength={100} // Limit to 100 characters
                   required
                 />
               </div>
@@ -203,16 +184,12 @@ export default function RegisterPageClient({
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-5 h-5 text-muted" />
-                  <label className="text-primary font-medium">
-                    Aloitus päivä
-                  </label>
+                  <label className="text-primary font-medium">Aloitus päivä</label>
                 </div>
                 <input
                   type="date"
                   value={formData.startDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startDate: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                   max={formData.endDate ? formData.endDate : undefined} // Ensure start date is before end date
                   className="input-field"
                   required
@@ -223,16 +200,12 @@ export default function RegisterPageClient({
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-5 h-5 text-muted" />
-                  <label className="text-primary font-medium">
-                    Viimeinen työpäivä päivä
-                  </label>
+                  <label className="text-primary font-medium">Viimeinen työpäivä päivä</label>
                 </div>
                 <input
                   type="date"
                   value={formData.endDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endDate: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                   min={formData.startDate} // Ensure end date is after start date
                   className="input-field"
                   required
@@ -241,9 +214,7 @@ export default function RegisterPageClient({
 
               {/* Workdays Section */}
               <div className="space-y-3">
-                <label className="text-primary font-medium">
-                  Työpäivät viikossa
-                </label>
+                <label className="text-primary font-medium">Työpäivät viikossa</label>
                 <div className="flex gap-2 flex-wrap w-full">
                   {weekDays.map((day) => (
                     <button
@@ -279,12 +250,12 @@ export default function RegisterPageClient({
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Rekisteröidään...</span>
+                    <span>Tallennetaan...</span>
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    <span>Rekisteröidy</span>
+                    <span>Tallenna</span>
                   </>
                 )}
               </button>

@@ -19,5 +19,5 @@ export default async function RegisterPage() {
 
   // Pass the data to the client component
   // Suspense is good practice here for better loading UX
-  return <RegisterPageClient userProfile={userProfile} />;
+  return <RegisterPageClient />;
 }
