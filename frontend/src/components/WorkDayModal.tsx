@@ -441,7 +441,7 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
                     <button
                       onClick={handleSave}
                       disabled={isSaveDisabled}
-                      className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center "
+                      className="btn-primary disabled:hover:scale-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center "
                     >
                       {isLoading ? (
                         <>
