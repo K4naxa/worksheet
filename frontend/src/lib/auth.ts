@@ -1,21 +1,29 @@
 import { AuthOptions } from "next-auth";
-import KeycloackProvider from "next-auth/providers/keycloak";
-import axios from "axios";
+import KeycloakProvider, { KeycloakProfile } from "next-auth/providers/keycloak";
+import axios, { AxiosError } from "axios";
 import { JWT } from "next-auth/jwt";
+import { OAuthConfig } from "next-auth/providers/oauth";
 
 declare module "next-auth" {
   interface Session {
     accessToken: string;
+    id_token: string;
+    provider: string;
     error?: string;
     user: {
       id?: string;
       name?: string | null;
       email?: string | null;
-      image?: string | null;
       registrationCompleted?: boolean;
     };
   }
 }
+
+const keycloak = KeycloakProvider({
+  clientId: process.env.KEYCLOAK_CLIENT_ID!,
+  clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
+  issuer: `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`,
+});
 
 const fetchRegistrationStatus = async (token: string): Promise<boolean> => {
   try {
@@ -68,16 +76,30 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
+async function doFinalSignoutHandshake(jwt: JWT) {
+  const { provider, id_token } = jwt;
+
+  if (provider == keycloak.id) {
+    try {
+      // Add the id_token_hint to the query string
+      const params = new URLSearchParams();
+      params.append("id_token_hint", id_token as string);
+      const issuer =
+        keycloak.options?.issuer ?? process.env.KEYCLOAK_AUTH_URL + `/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`;
+      const { status, statusText } = await axios.get(`${issuer}/protocol/openid-connect/logout?${params.toString()}`);
+
+      // The response body should contain a confirmation that the user has been logged out
+      console.log("Completed post-logout handshake", status, statusText);
+    } catch (e: any) {
+      console.error("Unable to perform post-logout handshake", (e as AxiosError)?.code || e);
+    }
+  }
+}
+
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
-  providers: [
-    KeycloackProvider({
-      clientId: process.env.KEYCLOAK_CLIENT_ID!,
-      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
-      issuer: `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`,
-    }),
-  ],
+  providers: [keycloak],
 
   // Callbacks to handle tokens and session
   callbacks: {
@@ -86,6 +108,8 @@ export const authOptions: AuthOptions = {
       if (account && account.access_token) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
+        token.id_token = account.id_token; // Store the id_token for Keycloak
+        token.provider = account.provider || "keycloak"; // Store the provider name
         // Fetching registration status only on the initial login
         token.registrationCompleted = (await fetchRegistrationStatus(account.access_token)) as boolean;
 
@@ -136,5 +160,9 @@ export const authOptions: AuthOptions = {
 
       return session;
     },
+  },
+
+  events: {
+    signOut: ({ session, token }) => doFinalSignoutHandshake(token),
   },
 };

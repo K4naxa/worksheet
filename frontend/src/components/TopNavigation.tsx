@@ -11,6 +11,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { getUserWorkdaysAction } from "@/app/actions";
 
+const logoutRedirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/login`;
+
 export default function TopNavigation({ userProfile }: { userProfile: User }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -19,10 +21,7 @@ export default function TopNavigation({ userProfile }: { userProfile: User }) {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowProfileMenu(false);
       }
     };
@@ -53,7 +52,8 @@ export default function TopNavigation({ userProfile }: { userProfile: User }) {
   };
 
   const handleLogout = () => {
-    signOut();
+    signOut({ callbackUrl: logoutRedirectUrl, redirect: true });
+
     setShowProfileMenu(false);
   };
 
@@ -67,16 +67,8 @@ export default function TopNavigation({ userProfile }: { userProfile: User }) {
               href="/"
               className="flex items-center space-x-3 transition-transform duration-300 ease-in-out hover:scale-[1.03] hover:opacity-90"
             >
-              <Image
-                src="/pwa/icons/icon-192x192.png"
-                alt="Työpäiväkirja Logo"
-                width={40}
-                height={40}
-                priority
-              />
-              <span className="hidden sm:inline text-xl font-bold text-primary">
-                Työpäiväkirja
-              </span>
+              <Image src="/pwa/icons/icon-192x192.png" alt="Työpäiväkirja Logo" width={40} height={40} priority />
+              <span className="hidden sm:inline text-xl font-bold text-primary">Työpäiväkirja</span>
             </Link>
 
             {/* Export button */}
@@ -106,9 +98,7 @@ export default function TopNavigation({ userProfile }: { userProfile: User }) {
               className="flex items-center space-x-2 px-4 py-2 rounded-lg glass-card glass-card-hover text-primary transition-all"
             >
               <User2 className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {userProfile?.name || userProfile?.email}
-              </span>
+              <span className="hidden sm:inline">{userProfile?.name || userProfile?.email}</span>
             </button>
 
             {/* Profile dropdown menu */}
