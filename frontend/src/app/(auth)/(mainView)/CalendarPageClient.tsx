@@ -205,82 +205,80 @@ export function HomePageClient({
   //
 
   return (
-    <div className="">
-      <div className="container mx-auto p-4">
-        {/* Header */}
+    <div className="container mx-auto">
+      {/* Header */}
 
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <Calendar
-                userWorkdays={workdays}
-                workDays={profile.workdays || []}
-                onDateSelect={handleDateSelect}
-                selectedDate={modalData.selectedDate}
-              />
-            </div>
-            <div className="space-y-6">
-              <button
-                disabled={isPending}
-                onClick={() => {
-                  const todayDate = new Date().toISOString().split("T")[0];
-                  const existingWorkday = workdays.find(
-                    (day) => new Date(day.date).toISOString().split("T")[0] === todayDate
-                  );
-                  setModalData({
-                    isOpen: true,
-                    selectedDate: todayDate,
-                    existingWorkday,
-                  });
-                }}
-                className="w-full p-4 btn-primary flex items-center justify-center space-x-2"
-              >
-                <Plus className="w-5 h-5" />
-                <span>Lisää tämän päivän työ</span>
-              </button>
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <Calendar
+              userWorkdays={workdays}
+              workDays={profile.workdays || []}
+              onDateSelect={handleDateSelect}
+              selectedDate={modalData.selectedDate}
+            />
+          </div>
+          <div className="space-y-6">
+            <button
+              disabled={isPending}
+              onClick={() => {
+                const todayDate = new Date().toISOString().split("T")[0];
+                const existingWorkday = workdays.find(
+                  (day) => new Date(day.date).toISOString().split("T")[0] === todayDate
+                );
+                setModalData({
+                  isOpen: true,
+                  selectedDate: todayDate,
+                  existingWorkday,
+                });
+              }}
+              className="w-full p-4 btn-primary flex items-center justify-center space-x-2"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Lisää tämän päivän työ</span>
+            </button>
 
-              <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-primary mb-4">Pikavinkit</h3>
-                <ul className="space-y-2 text-secondary text-sm">
-                  <li>• Klikkaa mitä tahansa päivää lisätäksesi tai nähdäksesi työn tiedot</li>
-                  <li>• Vihreät päivät näyttävät suoritetut työpäivät</li>
-                  <li>• Seuraa edistymistäsi Tilastot-välilehdessä</li>
-                  <li>• Määritä harjoittelun ajankohtaa Profiili sivulla</li>
-                </ul>
-              </div>
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="text-lg font-semibold text-primary mb-4">Pikavinkit</h3>
+              <ul className="space-y-2 text-secondary text-sm">
+                <li>• Klikkaa mitä tahansa päivää lisätäksesi tai nähdäksesi työn tiedot</li>
+                <li>• Vihreät päivät näyttävät suoritetut työpäivät</li>
+                <li>• Seuraa edistymistäsi Tilastot-välilehdessä</li>
+                <li>• Määritä harjoittelun ajankohtaa Profiili sivulla</li>
+              </ul>
             </div>
           </div>
         </div>
-
-        {/* Modals */}
-        <WorkDayModal
-          modalData={modalData}
-          onClose={closeModal}
-          onSave={handleSaveWorkday}
-          onDeleteRequest={handleDeleteRequest}
-        />
-
-        {/* Confirmation Modal */}
-        <ConfirmationModal
-          isOpen={showDeleteConfirmation}
-          onClose={() => setShowDeleteConfirmation(false)}
-          onConfirm={handleDeleteConfirm}
-          message={
-            <div>
-              <p className="text-center text-lg">Oletko varma, että haluat poistaa työpäivän:</p>
-              <p className="text-center font-bold text-primary text-xl my-3 bg-white/10 p-3 rounded-lg">
-                {dateToDelete ? formatDateFinLong(dateToDelete) : ""}
-              </p>
-              <p className="text-center text-sm text-muted-foreground">Tätä toimintoa ei voi peruuttaa.</p>
-            </div>
-          }
-          title="Poista työpäivä"
-          confirmText="Poista"
-          cancelText="Peruuta"
-          variant="default"
-        />
       </div>
+
+      {/* Modals */}
+      <WorkDayModal
+        modalData={modalData}
+        onClose={closeModal}
+        onSave={handleSaveWorkday}
+        onDeleteRequest={handleDeleteRequest}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirmation}
+        onClose={() => setShowDeleteConfirmation(false)}
+        onConfirm={handleDeleteConfirm}
+        message={
+          <div>
+            <p className="text-center text-lg">Oletko varma, että haluat poistaa työpäivän:</p>
+            <p className="text-center font-bold text-primary text-xl my-3 bg-white/10 p-3 rounded-lg">
+              {dateToDelete ? formatDateFinLong(dateToDelete) : ""}
+            </p>
+            <p className="text-center text-sm text-muted-foreground">Tätä toimintoa ei voi peruuttaa.</p>
+          </div>
+        }
+        title="Poista työpäivä"
+        confirmText="Poista"
+        cancelText="Peruuta"
+        variant="default"
+      />
     </div>
   );
 }

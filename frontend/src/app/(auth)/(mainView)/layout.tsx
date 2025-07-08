@@ -4,7 +4,7 @@ import { MainViewTabs } from "./MainViewTabs";
 
 export default function MainViewLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 sm:p-6">
       {/* The shared tab navigation */}
       <MainViewTabs />
 

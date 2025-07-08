@@ -57,7 +57,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
                   <Calendar className="w-4 h-4 text-muted" />
                   <h3 className="font-semibold text-primary">{formattedDate}</h3>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col gap-2 justify-center sm:flex-row items-center">
                   <button
                     onClick={() => onEdit(workDay)}
                     className="p-1.5 rounded-lg glass-card glass-card-hover text-primary transition-colors"
@@ -67,7 +67,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
                   </button>
                   <button
                     onClick={() => onDelete(formatDate(workDay.date))}
-                    className="p-1.5 btn-danger glass-card rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors"
+                    className="p-1.5 btn-danger glass-card "
                     title="Poista työpäivä"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

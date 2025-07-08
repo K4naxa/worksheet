@@ -166,7 +166,7 @@ export function WorkdayListPageClient({ initialWorkdays }: { initialWorkdays: Wo
 
   return (
     <div className="">
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto">
         {/* Main Content */}
         <div className="max-w-6xl mx-auto">
           <div className="max-w-4xl mx-auto">

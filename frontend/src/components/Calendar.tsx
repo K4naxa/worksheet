@@ -106,15 +106,14 @@ export const Calendar: React.FC<CalendarProps> = ({ userWorkdays, workDays, onDa
 
       const hasWorkDayEntry = workDayDatesSet.has(dateStr);
       const isScheduledWorkday = workDays.includes(dayDate.getUTCDay());
-      const isSelectable = isScheduledWorkday || isToday;
+      // Make all days with a workday entry selectable, as well as scheduled workdays and today
+      const isSelectable = isScheduledWorkday || isToday || hasWorkDayEntry;
 
       const dayClasses = `
         relative p-2 w-full h-12 rounded-lg text-sm font-medium transition-all duration-150 group
         ${isToday ? "border-2 border-white/50" : ""}
         ${!isSelectable ? "glass-card text-secondary opacity-30 pointer-events-none" : ""}
-        ${
-          isSelectable && hasWorkDayEntry ? "bg-gradient-to-r from-success-400 to-success-500 text-white shadow-md" : ""
-        }
+        ${hasWorkDayEntry ? "bg-gradient-to-r from-success-400 to-success-500 text-white shadow-md" : ""}
         ${
           isSelectable && !hasWorkDayEntry
             ? "glass-card text-secondary glass-card-hover hover:scale-105 hover:shadow-md"
@@ -176,7 +175,7 @@ export const Calendar: React.FC<CalendarProps> = ({ userWorkdays, workDays, onDa
   // --------------------------------------------------------------------------
 
   return (
-    <div className="glass-card rounded-2xl p-6">
+    <div className="glass-card rounded-2xl p-4 sm:p-6">
       {/* Header: Month/Year and Navigation Buttons */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-primary">
