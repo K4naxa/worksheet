@@ -60,6 +60,15 @@ export function ProfilePageClient({ initialProfile }: { initialProfile: User }) 
   /** Controls the visibility of the account deletion confirmation modal. */
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
+  const isFormDisabled =
+    isPending ||
+    !isEditing ||
+    !formData.startDate ||
+    !formData.endDate ||
+    formData.workdays.length === 0 ||
+    !formData.company ||
+    !formData.instructor;
+
   // --- Effects ---
 
   /**
@@ -184,10 +193,11 @@ export function ProfilePageClient({ initialProfile }: { initialProfile: User }) 
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                   placeholder="Yrityksen nimi"
                   className="input-field"
+                  maxLength={100}
                   required
                 />
               ) : (
-                <p className="text-primary p-3 rounded-lg bg-black/10 min-h-[44px] flex items-center">
+                <p className="text-primary p-3 rounded-lg bg-black/10 min-h-[44px] flex items-center break-words">
                   {formData.company || "Ei määritetty"}
                 </p>
               )}
@@ -204,10 +214,11 @@ export function ProfilePageClient({ initialProfile }: { initialProfile: User }) 
                   onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
                   placeholder="Ohjaajan nimi"
                   className="input-field"
+                  maxLength={100}
                   required
                 />
               ) : (
-                <p className="text-primary p-3 rounded-lg bg-black/10 min-h-[44px] flex items-center">
+                <p className="text-primary p-3 rounded-lg bg-black/10 min-h-[44px] flex items-center break-words">
                   {formData.instructor || "Ei määritetty"}
                 </p>
               )}
@@ -285,8 +296,8 @@ export function ProfilePageClient({ initialProfile }: { initialProfile: User }) 
               </button>
               <button
                 type="submit"
-                disabled={isPending}
-                className="btn-primary flex items-center space-x-2 disabled:opacity-50"
+                disabled={isFormDisabled}
+                className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none"
               >
                 {isPending ? (
                   <>
