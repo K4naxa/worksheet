@@ -113,6 +113,7 @@ export class WorkdayService {
           activities: true,
           learnings: true,
           mealLocation: true,
+          mealLocationOther: true,
           hours: true,
           createdAt: true,
         },
