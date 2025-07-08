@@ -40,34 +40,47 @@ const fetchRegistrationStatus = async (token: string): Promise<boolean> => {
   }
 };
 
+let isRefreshing = false; // Flag to prevent multiple refresh attempts
 async function refreshAccessToken(token: JWT): Promise<JWT> {
+  if (isRefreshing) {
+    console.log("🔄 Already refreshing access token, waiting for completion...");
+    return token; // Return the existing token while waiting
+  }
+
+  isRefreshing = true; // Set the flag to indicate a refresh is in progress
+  console.log("🔄 Refreshing access token...");
+
   try {
     const tokenUrl = `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`;
 
     // The data for the request needs to be in x-www-form-urlencoded format
-    const params = new URLSearchParams();
-    params.append("client_id", process.env.KEYCLOAK_CLIENT_ID!);
-    params.append("client_secret", process.env.KEYCLOAK_CLIENT_SECRET!);
-    params.append("grant_type", "refresh_token");
-    params.append("refresh_token", token.refreshToken as string);
+    const params = new URLSearchParams({
+      client_id: process.env.KEYCLOAK_CLIENT_ID!,
+      client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+      grant_type: "refresh_token",
+      refresh_token: token.refreshToken as string,
+    });
 
-    const { data: refreshedTokens } = await axios.post(tokenUrl, params, {
+    const response = await axios.post(tokenUrl, params, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
     });
 
+    const refreshedTokens = response.data;
     console.log("✅ Tokens refreshed successfully");
+
+    isRefreshing = false; // Reset the flag after successful refresh
 
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
-      // `expires_in` is in seconds, convert to milliseconds for Date
       accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
   } catch (error) {
     console.error("❌ Error refreshing access token", axios.isAxiosError(error) ? error.response?.data : error);
+    isRefreshing = false; // Reset the flag on error
 
     return {
       ...token,
@@ -103,14 +116,13 @@ export const authOptions: AuthOptions = {
 
   // Callbacks to handle tokens and session
   callbacks: {
-    async jwt({ token, account, trigger }) {
-      // This callback is called whenever a JWT is created or updated
+    async jwt({ token, account, trigger, session }) {
+      // 1. Initial signin, store the access token and id_token in the JWT
       if (account && account.access_token) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        token.id_token = account.id_token; // Store the id_token for Keycloak
-        token.provider = account.provider || "keycloak"; // Store the provider name
-        // Fetching registration status only on the initial login
+        token.id_token = account.id_token;
+        token.provider = account.provider || "keycloak";
         token.registrationCompleted = (await fetchRegistrationStatus(account.access_token)) as boolean;
 
         if (account.expires_at) {
@@ -120,20 +132,12 @@ export const authOptions: AuthOptions = {
         return token;
       }
 
-      // 2. On subsequent requests, check if the access token is expired.
-      // Give a 60-second buffer to be safe.
-      if (Date.now() < (token.accessTokenExpires as number) - 60 * 1000) {
-        console.log("✅ Access token is still valid");
+      // 3. If token has an error, it's invalid. Return it to propagate the error.
+      if (token.error) {
+        console.log("JWT: Token has error, returning as is.");
+        return token;
       }
 
-      // 3. If the access token is expired, try to refresh it
-      if (Date.now() >= (token.accessTokenExpires as number)) {
-        console.log("❌ Access token expired, refreshing...");
-        token = await refreshAccessToken(token);
-      }
-
-      // If the trigger is "update", we check if the token has an accessToken
-      // and update the registration status accordingly
       if (trigger === "update" && token.accessToken) {
         console.log("Updating JWT token with registration status...");
         try {
@@ -144,9 +148,12 @@ export const authOptions: AuthOptions = {
           // Optionally, you can set a default value or handle the error
           token.registrationCompleted = false;
         }
+        return token;
       }
 
-      return token; // Return the token unchanged if no account is present
+      // 5. If token is expired, attempt to refresh it.
+      console.log("JWT: Token expired, attempting locked refresh...");
+      return refreshAccessToken(token);
     },
 
     // This callback is called whenever a session is checked
