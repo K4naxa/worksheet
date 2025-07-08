@@ -14,61 +14,75 @@ const TABS = [
 export function MainViewTabs() {
   const pathname = usePathname();
   const [highlightStyle, setHighlightStyle] = useState({ left: 0, width: 0 });
+  const tabsContainerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   // Find the active tab index
   const activeIndex = TABS.findIndex((tab) => tab.href === pathname);
 
   useEffect(() => {
-    if (activeIndex !== -1 && tabRefs.current[activeIndex]) {
-      const el = tabRefs.current[activeIndex];
-      const parent = el?.parentElement;
-      if (el && parent) {
-        const elRect = el.getBoundingClientRect();
-        const parentRect = parent.getBoundingClientRect();
-        setHighlightStyle({
-          left: elRect.left - parentRect.left,
-          width: elRect.width,
-        });
+    const updateHighlight = () => {
+      if (activeIndex !== -1 && tabRefs.current[activeIndex] && tabsContainerRef.current) {
+        const activeTabEl = tabRefs.current[activeIndex];
+        const parentEl = tabsContainerRef.current;
+
+        if (activeTabEl && parentEl) {
+          const left = activeTabEl.offsetLeft;
+          const width = activeTabEl.offsetWidth;
+
+          setHighlightStyle({ left, width });
+        }
       }
-    }
+    };
+
+    updateHighlight();
+
+    // Recalculate on window resize to handle responsive changes
+    window.addEventListener("resize", updateHighlight);
+    return () => window.removeEventListener("resize", updateHighlight);
   }, [pathname, activeIndex]);
 
   return (
     <div className="flex justify-center mb-8">
-      <div className="flex items-center space-x-4">
-        <div className="glass-card rounded-2xl p-2">
-          <div className="relative flex space-x-2 min-w-[220px]">
-            {/* Animated highlight */}
-            <div
-              className="absolute top-0 left-0 h-full rounded-xl bg-gradient-primary z-0 transition-all duration-300"
-              style={{
-                left: highlightStyle.left,
-                width: highlightStyle.width,
-                pointerEvents: "none",
-                height: "100%",
-              }}
-            />
-            {TABS.map((tab, i) => {
-              const Icon = tab.icon;
-              const isActive = pathname === tab.href;
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  ref={(el) => {
-                    tabRefs.current[i] = el;
-                  }}
-                  className={`relative z-10 flex items-center space-x-1 md:space-x-2 px-4 md:px-6 py-3 rounded-xl font-medium transition-all
-                    ${isActive ? "text-white shadow-lg" : "text-secondary glass-card-hover"}
-                  `}
+      <div className="glass-card rounded-2xl p-1 sm:p-2">
+        <div className="relative flex items-center" ref={tabsContainerRef}>
+          {/* Animated highlight */}
+          <div
+            className="absolute top-0 left-0 h-full rounded-xl bg-gradient-primary shadow-lg z-0 transition-all duration-300 ease-in-out"
+            style={highlightStyle}
+          />
+          {TABS.map((tab, i) => {
+            const Icon = tab.icon;
+            const isActive = activeIndex === i;
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                ref={(el) => {
+                  tabRefs.current[i] = el;
+                }}
+                className={`
+                  relative z-10 flex justify-center items-center gap-x-2 font-medium hover: 
+                  transition-colors duration-300 ease-in-out
+                  h-12 w-24 sm:w-auto sm:px-6 select-none
+                `}
+              >
+                <Icon
+                  className={`w-5 h-5 transition-colors ${
+                    isActive ? "text-white" : "text-secondary group-hover:text-primary"
+                  }`}
+                />
+                {/* THIS IS THE KEY CHANGE: Hide text on small screens */}
+                <span
+                  className={`hidden sm:inline transition-colors ${
+                    isActive ? "text-white" : "text-secondary group-hover:text-primary"
+                  }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                </Link>
-              );
-            })}
-          </div>
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

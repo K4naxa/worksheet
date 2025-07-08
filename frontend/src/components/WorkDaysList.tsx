@@ -37,10 +37,10 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-primary mb-6">Työpäivät</h2>
-
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+    <div className="space-y-4 h-full flex flex-col">
+      <h2 className="text-2xl font-bold text-primary mb-6 shrink-0">Työpäivät</h2>
+      {/* Make the list scrollable, but not the whole page */}
+      <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
         {sortedWorkDays.map((workDay) => {
           const formattedDate = formatDateFinLong(workDay.date);
           const mealDisplay = getMealLocationDisplay(workDay);

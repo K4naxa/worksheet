@@ -59,7 +59,7 @@ export default function TopNavigation({ userProfile }: { userProfile: User }) {
 
   return (
     <nav className="bg-white/10 shadow-lg border-b border-white/10">
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-2 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Left side - Logo and Export button */}
           <div className="flex items-center space-x-4 md:space-x-6">
