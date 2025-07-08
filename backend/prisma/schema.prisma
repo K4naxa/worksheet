@@ -25,7 +25,7 @@ model User {
   id        String   @id
 
  // synced with Keycloak
-  email     String   @unique
+  email     String
   name      String
 
   // this is used to check if the user has completed their registration
