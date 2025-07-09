@@ -201,8 +201,8 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
             </span>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 rounded-lg transition-colors glass-card glass-card-hover ${
-                showFilters || hasActiveFilters ? "bg-primary/20 text-primary" : " text-secondary"
+              className={`p-2 rounded-lg transition-all duration-200 glass-card glass-card-hover ${
+                showFilters || hasActiveFilters ? "bg-primary/20 text-primary scale-105" : " text-secondary"
               }`}
               title="Suodattimet (Ctrl+F)"
             >
@@ -224,8 +224,12 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
         </div>
 
         {/* Filters Panel */}
-        {showFilters && (
-          <div className="glass-card rounded-lg p-4 mb-4 space-y-4">
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out transform ${
+            showFilters ? "max-h-96 opacity-100 mb-4 translate-y-0" : "max-h-0 opacity-0 mb-0 -translate-y-2"
+          }`}
+        >
+          <div className="glass-card rounded-lg p-4 space-y-4">
             <div className="flex flex-wrap gap-4 items-center">
               {/* Meal Location Filter */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -335,27 +339,18 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
                 </select>
               </div>
             </div>
-
-            {/* Clear Filters - Moved to bottom on mobile */}
-            {hasActiveFilters && (
-              <div className="flex justify-start">
-                <button
-                  onClick={handleClearFilters}
-                  className="flex items-center gap-1 px-3 py-1 text-sm text-secondary hover:text-primary transition-colors"
-                >
-                  <X className="w-3 h-3" />
-                  Tyhjennä suodattimet
-                </button>
-              </div>
-            )}
           </div>
-        )}
+        </div>
 
         {/* Results Info */}
 
         {/* Quick summary when filters are active */}
-        {hasActiveFilters && filteredAndSortedWorkDays.length > 0 && (
-          <div className="glass-card rounded-lg p-3 mb-4 bg-primary/5">
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out transform ${
+            hasActiveFilters ? "max-h-32 opacity-100 mb-4 translate-y-0" : "max-h-0 opacity-0 mb-0 -translate-y-2"
+          }`}
+        >
+          <div className="glass-card rounded-lg p-3 bg-primary/5 flex gap-2 flex-wrap justify-between">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-primary font-medium">Suodatettu näkymä:</span>
               {searchTerm.trim() && (
@@ -424,8 +419,17 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
                 </span>
               )}
             </div>
+            <div className="flex justify-start">
+              <button
+                onClick={handleClearFilters}
+                className="flex items-center gap-1 px-3 py-1 text-sm text-secondary hover:text-primary transition-colors"
+              >
+                <X className="w-3 h-3" />
+                Tyhjennä suodattimet
+              </button>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Work Days List */}
