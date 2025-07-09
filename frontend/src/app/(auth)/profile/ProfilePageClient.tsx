@@ -81,6 +81,18 @@ export function ProfilePageClient({ initialProfile }: { initialProfile: User }) 
     }
   }, [error]);
 
+  /**
+   * Manages the body's scroll lock when any modal is open to prevent background scrolling.
+   */
+  useEffect(() => {
+    const isModalOpen = showDeleteConfirmation;
+    document.body.style.overflow = isModalOpen ? "hidden" : "";
+    // Cleanup function to reset scroll on component unmount.
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showDeleteConfirmation]);
+
   // --- Event Handlers ---
 
   /** Toggles a day's selection in the workdays array. */
