@@ -55,7 +55,7 @@ export const authOptions: AuthOptions = {
     KeycloakProvider({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
-      issuer: `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`,
+      issuer: `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`,
     }),
   ],
   callbacks: {
@@ -100,7 +100,7 @@ export const authOptions: AuthOptions = {
       // This is our lock.
       refreshingTokenPromise = new Promise(async (resolve) => {
         try {
-          const tokenUrl = `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`;
+          const tokenUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`;
           const params = new URLSearchParams({
             client_id: process.env.KEYCLOAK_CLIENT_ID!,
             client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
