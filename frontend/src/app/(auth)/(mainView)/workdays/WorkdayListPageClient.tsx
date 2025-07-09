@@ -165,43 +165,41 @@ export function WorkdayListPageClient({ initialWorkdays }: { initialWorkdays: Wo
   };
 
   return (
-    <div className="">
-      <div className="container mx-auto">
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto">
-          <div className="max-w-4xl mx-auto">
-            <WorkDaysList workDays={workdays} onEdit={handleEditWorkday} onDelete={handleDeleteRequest} />
-          </div>
+    <div className="container mx-auto">
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
+          <WorkDaysList workDays={workdays} onEdit={handleEditWorkday} onDelete={handleDeleteRequest} />
         </div>
-
-        {/* Modals */}
-        <WorkDayModal
-          modalData={modalData}
-          onClose={closeModal}
-          onSave={handleSaveWorkday}
-          onDeleteRequest={handleDeleteRequest}
-        />
-
-        {/* Confirmation Modal */}
-        <ConfirmationModal
-          isOpen={showDeleteConfirmation}
-          onClose={() => setShowDeleteConfirmation(false)}
-          onConfirm={handleDeleteConfirm}
-          message={
-            <div>
-              <p className="text-center text-lg">Oletko varma, että haluat poistaa työpäivän:</p>
-              <p className="text-center font-bold text-primary text-xl my-3 bg-white/10 p-3 rounded-lg">
-                {dateToDelete ? formatDateFinLong(dateToDelete) : ""}
-              </p>
-              <p className="text-center text-sm text-muted-foreground">Tätä toimintoa ei voi peruuttaa.</p>
-            </div>
-          }
-          title="Poista työpäivä"
-          confirmText="Poista"
-          cancelText="Peruuta"
-          variant="default"
-        />
       </div>
+
+      {/* Modals */}
+      <WorkDayModal
+        modalData={modalData}
+        onClose={closeModal}
+        onSave={handleSaveWorkday}
+        onDeleteRequest={handleDeleteRequest}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirmation}
+        onClose={() => setShowDeleteConfirmation(false)}
+        onConfirm={handleDeleteConfirm}
+        message={
+          <div>
+            <p className="text-center text-lg">Oletko varma, että haluat poistaa työpäivän:</p>
+            <p className="text-center font-bold text-primary text-xl my-3 bg-white/10 p-3 rounded-lg">
+              {dateToDelete ? formatDateFinLong(dateToDelete) : ""}
+            </p>
+            <p className="text-center text-sm text-muted-foreground">Tätä toimintoa ei voi peruuttaa.</p>
+          </div>
+        }
+        title="Poista työpäivä"
+        confirmText="Poista"
+        cancelText="Peruuta"
+        variant="default"
+      />
     </div>
   );
 }
