@@ -16,6 +16,5 @@ export default async function Home() {
     redirect("/login");
   }
 
-  // The Server Component's only job is to fetch data and pass it to the Client Component.
   return <HomePageClient initialProfile={userProfile} initialWorkdays={userWorkdays} />;
 }

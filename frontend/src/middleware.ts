@@ -6,70 +6,58 @@ const publicRoutes = ["/login"];
 
 export async function middleware(req: NextRequest) {
   console.log("🛡️ Middleware: Processing request to:", req.nextUrl.pathname);
+  const pathname = req.nextUrl.pathname;
+
+  // 1. Allow all static sites and API routes to pass through without authentication
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/") ||
+    pathname.includes(".") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/robots.txt")
+  ) {
+    console.log("🔌 Middleware: Static or API route, allowing through");
+    return NextResponse.next();
+  }
+
+  // 2. Get the token from the request
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const isAuthenticated = !!token; // Check if token exists
   const registrationCompleted = token?.registrationCompleted || false; // Default to false if not set
 
-  const { pathname } = req.nextUrl;
+  console.log("🛡️ Middleware: Processing", { pathname, isAuthenticated, registrationCompleted });
 
-  // 1. Allow API routes to handle their own auth
-  if (pathname.startsWith("/api/")) {
-    console.log("🔌 Middleware: API route, allowing through");
-    return NextResponse.next();
-  }
-
-  // 1.1. Allow static assets
-  if (
-    pathname.startsWith("/_next/") ||
-    pathname.startsWith("/favicon.ico") ||
-    pathname.startsWith("/robots.txt") ||
-    pathname.startsWith("/images/") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next();
-  }
-
+  // 3. Define routes
   const isPublicRoute = publicRoutes.includes(pathname);
-  const isProtectedRoute = !isPublicRoute;
+  const isRegisterRoute = pathname === "/register";
 
-  console.log("🔍 Middleware: Route analysis:", {
-    pathname,
-    isAuthenticated: !!token,
-    registrationCompleted,
-    isPublicRoute,
-    isProtectedRoute,
-  });
+  // 4. Decision logic
 
-  // 2. If no session and accessing protected route -> redirect to login
-  if (!token && isProtectedRoute) {
-    console.log(
-      "🚫 Middleware: No session for protected route, redirecting to login"
-    );
-
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+  if (!isAuthenticated) {
+    if (isPublicRoute) {
+      console.log("✅ Middleware: Public route, allowing through");
+      return NextResponse.next();
+    }
+    console.log("🚫 Middleware: No session found, redirecting to login");
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // 3. If session exists but not completed registration
-  if (token && !registrationCompleted && pathname !== "/register") {
-    console.log(
-      "🚫 Middleware: Registration not completed, redirecting to registration"
-    );
-    return NextResponse.redirect(new URL("/register", req.url));
+  if (isAuthenticated) {
+    // Check if registration is completed
+    if (!registrationCompleted && !isRegisterRoute) {
+      console.log("🚫 Middleware: Registration not completed, redirecting to registration");
+      return NextResponse.redirect(new URL("/register", req.url));
+    }
+    // If user is authenticated and registration is completed, redirect home /register request
+    if (registrationCompleted && isRegisterRoute) {
+      console.log("🚫 Middleware: User is authenticated and registered, redirecting to home");
+      return NextResponse.redirect(new URL("/", req.url));
+    }
   }
 
-  // 4. If session exists and accessing registration page, redirect to home
-  if (token && registrationCompleted && pathname === "/register") {
-    console.log(
-      "🚫 Middleware: User is authenticated and registered, redirecting to home"
-    );
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  // 4. if session exists and registration is completed
-
-  console.log("✅ Middleware: Allowing request through");
+  // If none of the above rules caused a redirect, the user is authorized for the page.
+  console.log("✅ Authorized. Allowing request.");
   return NextResponse.next();
 }
 

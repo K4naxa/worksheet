@@ -1,8 +1,14 @@
+// src/lib/auth.ts (or wherever your authOptions are)
+
 import { AuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
 import axios from "axios";
 import { JWT } from "next-auth/jwt";
 
+// This is our promise-based lock. It will hold the promise of the token refresh.
+let refreshingTokenPromise: Promise<JWT> | null = null;
+
+// Augment the Session and JWT types
 declare module "next-auth" {
   interface Session {
     accessToken: string;
@@ -16,12 +22,17 @@ declare module "next-auth" {
   }
 }
 
-const keycloak = KeycloakProvider({
-  clientId: process.env.KEYCLOAK_CLIENT_ID!,
-  clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
-  issuer: `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`,
-});
+declare module "next-auth/jwt" {
+  interface JWT {
+    accessToken?: string;
+    accessTokenExpires?: number;
+    refreshToken?: string;
+    registrationCompleted?: boolean;
+    error?: string;
+  }
+}
 
+// Helper function remains the same
 const fetchRegistrationStatus = async (token: string): Promise<boolean> => {
   try {
     console.log("Fetching registration completed status from backend...");
@@ -33,112 +44,115 @@ const fetchRegistrationStatus = async (token: string): Promise<boolean> => {
     return response.data.registrationCompleted as boolean;
   } catch (error) {
     console.error("Error fetching registration status:", error);
-    throw error;
+    return false; // Fail safely
   }
 };
-
-let isRefreshing = false; // Flag to prevent multiple refresh attempts
-async function refreshAccessToken(token: JWT): Promise<JWT> {
-  if (isRefreshing) {
-    console.log("🔄 Already refreshing access token, waiting for completion...");
-    return token; // Return the existing token while waiting
-  }
-
-  isRefreshing = true; // Set the flag to indicate a refresh is in progress
-  console.log("🔄 Refreshing access token...");
-
-  try {
-    const tokenUrl = `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`;
-
-    // The data for the request needs to be in x-www-form-urlencoded format
-    const params = new URLSearchParams({
-      client_id: process.env.KEYCLOAK_CLIENT_ID!,
-      client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
-      grant_type: "refresh_token",
-      refresh_token: token.refreshToken as string,
-    });
-
-    const response = await axios.post(tokenUrl, params, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
-
-    const refreshedTokens = response.data;
-    console.log("✅ Tokens refreshed successfully");
-
-    isRefreshing = false; // Reset the flag after successful refresh
-
-    return {
-      ...token,
-      accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
-    };
-  } catch (error) {
-    console.error("❌ Error refreshing access token", axios.isAxiosError(error) ? error.response?.data : error);
-    isRefreshing = false; // Reset the flag on error
-
-    return {
-      ...token,
-      error: "RefreshAccessTokenError", // This will be used in the session callback
-    };
-  }
-}
 
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
-  providers: [keycloak],
-
-  // Callbacks to handle tokens and session
+  providers: [
+    KeycloakProvider({
+      clientId: process.env.KEYCLOAK_CLIENT_ID!,
+      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
+      issuer: `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`,
+    }),
+  ],
   callbacks: {
-    async jwt({ token, account, trigger, session }) {
-      // 1. Initial signin, store the access token and id_token in the JWT
+    async jwt({ token, account, trigger }) {
+      // 1. Initial sign-in
       if (account && account.access_token) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        token.registrationCompleted = (await fetchRegistrationStatus(account.access_token)) as boolean;
-
-        if (account.expires_at) {
-          token.accessTokenExpires = account.expires_at * 1000;
-        }
-
+        token.accessTokenExpires = account.expires_at ? account.expires_at * 1000 : 0;
+        token.registrationCompleted = await fetchRegistrationStatus(account.access_token);
         return token;
       }
 
-      // 3. If token has an error, it's invalid. Return it to propagate the error.
-      if (token.error) {
-        console.log("JWT: Token has error, returning as is.");
-        return token;
-      }
-
+      // 2. Handle session updates
       if (trigger === "update" && token.accessToken) {
         console.log("Updating JWT token with registration status...");
-        try {
-          const registrationStatus = await fetchRegistrationStatus(token.accessToken as string);
-          token.registrationCompleted = registrationStatus;
-        } catch (error) {
-          console.error("Error updating registration status in JWT:", error);
-          // Optionally, you can set a default value or handle the error
-          token.registrationCompleted = false;
-        }
+        token.registrationCompleted = await fetchRegistrationStatus(token.accessToken as string);
         return token;
       }
 
-      // 5. If token is expired, attempt to refresh it.
-      console.log("JWT: Token expired, attempting locked refresh...");
-      return refreshAccessToken(token);
+      // 3. If token is still valid, return it.
+      if (Date.now() < (token.accessTokenExpires as number)) {
+        console.log("✅ JWT: Access token is still valid.");
+        return token;
+      }
+
+      // 4. If token is expired, we need to refresh it.
+      // Check if a refresh is already in progress.
+      if (refreshingTokenPromise) {
+        console.log("🔄 A token refresh is already in progress, waiting for it to complete...");
+        // Wait for the existing refresh promise to resolve
+        return await refreshingTokenPromise;
+      }
+
+      console.log("JWT: Token expired, attempting to refresh...");
+      if (!token.refreshToken) {
+        console.error("JWT: No refresh token available.");
+        return { ...token, error: "RefreshAccessTokenError" };
+      }
+
+      // Create a new promise for the refresh operation and store it.
+      // This is our lock.
+      refreshingTokenPromise = new Promise(async (resolve) => {
+        try {
+          const tokenUrl = `${process.env.KEYCLOAK_AUTH_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`;
+          const params = new URLSearchParams({
+            client_id: process.env.KEYCLOAK_CLIENT_ID!,
+            client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+            grant_type: "refresh_token",
+            refresh_token: token.refreshToken as string,
+          });
+
+          const response = await axios.post(tokenUrl, params, {
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          });
+
+          const refreshedTokens = response.data;
+          console.log("✅ Tokens refreshed successfully");
+
+          // Resolve the promise with the newly refreshed token
+          resolve({
+            ...token,
+            accessToken: refreshedTokens.access_token,
+            accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+            refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+            error: undefined,
+          });
+        } catch (error) {
+          console.error("❌ Error refreshing access token", axios.isAxiosError(error) ? error.response?.data : error);
+          // Resolve the promise with the old token but with an error
+          resolve({
+            ...token,
+            error: "RefreshAccessTokenError",
+          });
+        } finally {
+          // IMPORTANT: Clear the promise lock so the next expired token
+          // can trigger a new refresh.
+          refreshingTokenPromise = null;
+        }
+      });
+
+      return await refreshingTokenPromise;
     },
 
-    // This callback is called whenever a session is checked
     async session({ session, token }) {
-      // We pass accessToken from the JWT token to the session
-      // To the session object. This allows us to access the server-side session
       session.accessToken = token.accessToken as string;
-      session.user.id = token.sub as string; // Use sub as user ID
-      session.user.registrationCompleted = token.registrationCompleted as boolean;
-      session.error = token.error as string; // Pass any error from the JWT to the session
+      session.user.id = token.sub;
+      session.user.registrationCompleted = token.registrationCompleted;
+      session.error = token.error;
+
+      // If there's a refresh error, effectively invalidate the session for the client
+      if (token.error === "RefreshAccessTokenError") {
+        return {
+          ...session,
+          error: "RefreshAccessTokenError",
+        };
+      }
 
       return session;
     },
