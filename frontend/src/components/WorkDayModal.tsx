@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Save, MapPin, BookOpen, Briefcase, Clock, Edit, AlertCircle, Trash2 } from "lucide-react";
 import { CreateWorkDay, Workday } from "@/types";
+import { useModalEffects } from "@/hooks/useModalEffect";
 
 // ============================================================================
 // Constants
@@ -114,6 +115,8 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
       }
     }
   }, [isOpen, existingWorkday, selectedDate, initialIsEditing]);
+
+  useModalEffects(isOpen, onClose);
 
   // --------------------------------------------------------------------------
   // Handlers

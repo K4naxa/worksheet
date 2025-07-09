@@ -1,5 +1,3 @@
-// src/hooks/useModalEffects.ts (Final Corrected Version)
-
 import { useEffect, useRef } from "react"; // Import useRef
 
 export const useModalEffects = (isOpen: boolean, onClose: () => void) => {

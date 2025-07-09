@@ -1,16 +1,11 @@
-// src/components/skeletons/ProfilePageSkeleton.tsx
-
 import React from "react";
 
-// You can reuse these from your HomePageSkeleton if you put them in a shared file
 const Shimmer = () => (
   <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 );
 
 const SkeletonBlock = ({ className }: { className?: string }) => (
-  <div
-    className={`relative overflow-hidden rounded-lg bg-white/5 ${className}`}
-  >
+  <div className={`relative overflow-hidden rounded-lg bg-white/5 ${className}`}>
     <Shimmer />
   </div>
 );

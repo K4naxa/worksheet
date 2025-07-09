@@ -2,16 +2,15 @@
 
 import { useState, useEffect, useCallback, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarDays, Plus, List } from "lucide-react";
+import { Plus } from "lucide-react";
 
 // Components
-import { Calendar, ConfirmationModal, Statistics, WorkDayModal, WorkDaysList } from "@/components";
+import { Calendar, ConfirmationModal, WorkDayModal } from "@/components";
 // Types
-import { Workday, WorkStats, WorkPracticeSettings, User } from "@/types";
+import { Workday, WorkStats, User } from "@/types";
 // Server Actions
 import { saveWorkdayAction, deleteWorkdayAction } from "@/app/actions";
 // Utils
-import { calculateStats } from "@/utils/stats";
 import { formatDateFinLong } from "@/utils/formatUtils";
 
 /**

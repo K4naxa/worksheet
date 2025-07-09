@@ -1,4 +1,3 @@
-// app/profile/page.tsx
 import { getUserProfile } from "@/lib/data";
 import { ProfilePageClient } from "./ProfilePageClient";
 import { ProfilePageSkeleton } from "@/components/skeletons/ProfilePageSkeleton";

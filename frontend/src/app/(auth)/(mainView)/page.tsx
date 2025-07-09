@@ -1,8 +1,6 @@
 import { getUserProfile, getUserWorkdays } from "@/lib/data";
 import { HomePageClient } from "./CalendarPageClient";
-import { HomePageSkeleton } from "@/components/skeletons/HomePageSkeleton";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 
 // This page is a Server Component that fetches data and passes it to the Client Component.
 // It uses Next.js's dynamic rendering to ensure the data is always fresh.

@@ -1,5 +1,3 @@
-// app/(auth)/(mainView)/layout.tsx
-
 import { MainViewTabs } from "./MainViewTabs";
 
 export default function MainViewLayout({ children }: { children: React.ReactNode }) {

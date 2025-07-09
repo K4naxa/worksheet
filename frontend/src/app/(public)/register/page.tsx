@@ -1,4 +1,3 @@
-// app/profile/page.tsx
 import RegisterPageClient from "@/app/(public)/register/RegisterPageClient";
 import { getUserProfile } from "@/lib/data";
 

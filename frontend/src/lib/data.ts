@@ -37,7 +37,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     }
 
     console.error(`API Error: ${response.status} ${response.statusText}`);
-    // You might want to parse the error body for more details
+
     throw new Error(
       errorBody.message || (Array.isArray(errorBody.message) ? errorBody.message.join(", ") : JSON.stringify(errorBody))
     );
@@ -79,7 +79,6 @@ export async function getUserWorkdays(): Promise<Workday[]> {
 }
 
 // --- Mutation Functions (to be used by Server Actions) ---
-// These don't need to be exported if only used in actions.ts, but it's clean.
 
 export async function saveWorkdayOnServer(workday: Workday) {
   return apiFetch("/workday", {
@@ -96,9 +95,6 @@ export async function deleteWorkdayOnServer(date: string) {
 }
 
 export async function updateUserProfileOnServer(data: RegistrationComplition) {
-  // Assuming your backend expects a POST/PUT to /user/profile to update
-  // The original function was completeRegistration, so I'll use the /register endpoint.
-  // Adjust the endpoint if it's different (e.g., PUT to /user/profile).
   return apiFetch("/user/register", {
     method: "POST",
     body: JSON.stringify(data),

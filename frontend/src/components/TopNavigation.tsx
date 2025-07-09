@@ -11,8 +11,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { getUserWorkdaysAction } from "@/app/actions";
 
-const logoutRedirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/login`;
-
 export default function TopNavigation({ userProfile }: { userProfile: User }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

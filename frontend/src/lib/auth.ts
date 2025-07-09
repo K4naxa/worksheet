@@ -1,8 +1,7 @@
 import { AuthOptions } from "next-auth";
-import KeycloakProvider, { KeycloakProfile } from "next-auth/providers/keycloak";
-import axios, { AxiosError } from "axios";
+import KeycloakProvider from "next-auth/providers/keycloak";
+import axios from "axios";
 import { JWT } from "next-auth/jwt";
-import { OAuthConfig } from "next-auth/providers/oauth";
 
 declare module "next-auth" {
   interface Session {
