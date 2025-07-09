@@ -64,17 +64,6 @@ export function HomePageClient({
   /** State to track which date is pending deletion. */
   const [dateToDelete, setDateToDelete] = useState<string | null>(null);
 
-  /** State to hold calculated statistics. */
-  const [stats, setStats] = useState<WorkStats>({
-    totalDays: 0,
-    totalHours: 0,
-    practiceProgress: 0,
-    mealDistribution: { school: 0, work: 0, other: 0 },
-  });
-
-  /** Dedicated loading state for the deletion process to provide feedback on the confirmation button. */
-  const [isDeleting, setIsDeleting] = useState(false);
-
   // --------------------------------------------------------------------------
   // Effects
   // --------------------------------------------------------------------------
@@ -156,16 +145,19 @@ export function HomePageClient({
    * @param {Workday | CreateWorkDay} workday - The workday data to save.
    */
   const handleSaveWorkday = async (workday: any) => {
-    startTransition(async () => {
-      const result = await saveWorkdayAction(workday);
-      if (result.success) {
-        closeModal();
-        router.refresh();
-      } else {
-        console.error("Failed to save workday:", result.error);
-        alert("Työpäivän tallentaminen epäonnistui.");
-      }
-    });
+    try {
+      startTransition(async () => {
+        const result = await saveWorkdayAction(workday);
+        if (result.success) {
+          router.refresh();
+        } else {
+          console.error("Failed to save workday:", result.error);
+          alert("Työpäivän tallentaminen epäonnistui.");
+        }
+      });
+
+      closeModal();
+    } catch (error) {}
   };
 
   /**
@@ -174,8 +166,6 @@ export function HomePageClient({
    */
   const handleDeleteConfirm = async () => {
     if (!dateToDelete) return;
-
-    setIsDeleting(true);
 
     try {
       startTransition(async () => {
@@ -189,10 +179,8 @@ export function HomePageClient({
           console.error("Error deleting work day:", result.error);
           alert("Työpäivän poistaminen epäonnistui. Yritä uudelleen.");
         }
-        setIsDeleting(false);
       });
     } finally {
-      setIsDeleting(false);
       setDateToDelete(null);
 
       closeModal();
