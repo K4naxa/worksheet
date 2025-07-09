@@ -241,6 +241,7 @@ export function HomePageClient({
 
       {/* Modals */}
       <WorkDayModal
+        key={modalData.selectedDate}
         modalData={modalData}
         onClose={closeModal}
         onSave={handleSaveWorkday}
