@@ -12,9 +12,9 @@ const SkeletonBlock = ({ className }: { className?: string }) => (
 
 export const ProfilePageSkeleton = () => {
   return (
-    <div className="animate-pulse flex flex-col gap-12 items-center justify-center p-4 h-full">
+    <div className="animate-pulse flex flex-col gap-8 md:gap-12 items-center justify-center p-4 h-full">
       {/* Work Settings Skeleton */}
-      <div className="glass-card rounded-2xl w-full max-w-6xl">
+      <div className="glass-card rounded-2xl w-full max-w-4xl">
         <div className="flex items-center justify-between p-6 border-b border-white/20">
           <SkeletonBlock className="h-7 w-1/3" />
           <SkeletonBlock className="h-10 w-28" />
@@ -58,7 +58,7 @@ export const ProfilePageSkeleton = () => {
       </div>
 
       {/* Profile Info Skeleton */}
-      <div className="glass-card rounded-2xl w-full max-w-6xl">
+      <div className="glass-card rounded-2xl w-full max-w-4xl">
         <div className="flex items-center p-6 border-b border-white/20">
           <SkeletonBlock className="h-7 w-1/4" />
         </div>
@@ -73,7 +73,7 @@ export const ProfilePageSkeleton = () => {
       </div>
 
       {/* Profile Deletion Skeleton */}
-      <div className="glass-card border-2 border-red-500/20 rounded-2xl w-full max-w-6xl">
+      <div className="glass-card border-2 border-red-500/20 rounded-2xl w-full max-w-4xl">
         <div className="flex items-center p-6 border-b border-red-500/20">
           <SkeletonBlock className="h-7 w-1/4" />
         </div>
