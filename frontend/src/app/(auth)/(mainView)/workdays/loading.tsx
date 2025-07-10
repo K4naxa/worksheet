@@ -15,7 +15,7 @@ export default function WorkdaysLoading() {
 
         {/* Search Bar */}
         <div className="relative mb-4">
-          <div className="h-12 w-full bg-white/10 rounded-lg animate-pulse"></div>
+          <div className="h-10 w-full bg-white/10 rounded-lg animate-pulse"></div>
         </div>
 
         {/* Work Days List Skeleton */}
