@@ -94,6 +94,23 @@ export default function RegisterPageClient({}) {
     await handleSubmit();
   };
 
+  const handleLogout = () => {
+    try {
+      const issuerUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`;
+      const logoutUrl = new URL(`${issuerUrl}/protocol/openid-connect/logout`);
+      const postLogoutRedirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}`;
+
+      logoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutRedirectUrl);
+      logoutUrl.searchParams.set("client_id", process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID!);
+
+      signOut({ redirect: false });
+      window.location.href = logoutUrl.toString();
+    } catch (error) {
+      console.error("Error logging out:", error);
+      signOut({ callbackUrl: "/" });
+    }
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
@@ -134,7 +151,7 @@ export default function RegisterPageClient({}) {
                 {/* Logout Button */}
                 <LogOut
                   className="w-5 h-5 text-muted absolute left-2 cursor-pointer hover:text-primary"
-                  onClick={() => signOut()}
+                  onClick={handleLogout}
                 />
 
                 <div className="text-xl font-bold text-center text-primary w-auto mx-4">Työharjoittelun Tiedot</div>
