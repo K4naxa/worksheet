@@ -4,8 +4,8 @@ const Shimmer = () => (
   <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 );
 
-const SkeletonBlock = ({ className }: { className?: string }) => (
-  <div className={`relative overflow-hidden rounded-lg bg-white/5 ${className}`}>
+const SkeletonBlock = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
+  <div className={`relative overflow-hidden rounded-lg bg-white/5 ${className}`} style={style}>
     <Shimmer />
   </div>
 );
@@ -19,19 +19,16 @@ export const StatisticsPageSkeleton = () => {
       {/* Main Stats Grid Skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div
-            key={index}
-            className="glass-card rounded-2xl p-6 transition-all duration-300"
-          >
+          <div key={index} className="glass-card rounded-2xl p-6 transition-all duration-300">
             {/* Icon Skeleton */}
             <SkeletonBlock className="w-12 h-12 rounded-xl mb-4" />
-            
+
             {/* Value Skeleton */}
             <SkeletonBlock className="h-9 w-16 mb-1" />
-            
+
             {/* Label Skeleton */}
             <SkeletonBlock className="h-5 w-3/4 mb-1" />
-            
+
             {/* Description Skeleton */}
             <SkeletonBlock className="h-4 w-full" />
           </div>
