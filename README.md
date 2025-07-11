@@ -247,39 +247,161 @@ Your application should now be running at `http://localhost:3000`.
 
 ## 🚢 Production Deployment
 
-Deploying this application involves running the three main components (Frontend, Backend, Keycloak) as optimized, long-running services.
+This guide outlines how to deploy the application to a production environment using Docker and Docker Compose.
 
 ### Requirements
 
-- A Virtual Private Server (VPS) or cloud instance (e.g., DigitalOcean, AWS EC2, Vultr) with at least 2GB RAM (4GB recommended).
-- Docker and Docker Compose installed on the server.
-- A domain name and a reverse proxy like Nginx or Caddy to handle SSL termination and routing.
+- A server (VPS, cloud instance, etc.) with Docker and Docker Compose installed.
+- A domain name.
+- A reverse proxy (like Nginx or Caddy) to handle SSL and routing.
+- **Running PostgreSQL and Keycloak instances** accessible from your server. This guide assumes these are already set up.
 
-### Deployment Steps (High-Level)
+### 1. Build and Push Docker Images
 
-1.  **Prepare the Server:**
+The repository contains `Dockerfile`s for both the frontend and backend. You need to build these images and push them to a container registry (e.g., Docker Hub, GitHub Container Registry).
 
-    - Set up your VPS and install Docker/Docker Compose.
-    - Configure your firewall to allow traffic on ports 80 (HTTP) and 443 (HTTPS).
+**A. Build the Backend Image**
 
-2.  **Use Docker for Everything:**
+```bash
+# Navigate to the backend directory
+cd backend
 
-    - **Frontend & Backend:** Create a `Dockerfile` for both your Next.js and NestJS applications to build optimized production images.
-    - **Keycloak & Database:** Use the `docker-compose.yml` file from development, but ensure it's configured for production.
+# Build the image (replace <your-username> with your registry username)
+docker build -t <your-username>/worksheet-backend:latest .
 
-3.  **Run with Docker Compose:**
+# Push the image
+docker push <your-username>/worksheet-backend:latest
+```
 
-    - Run docker build (remember to specify cpu architecture) to build an image of the
-    - Transfer project files (or clone from Git) to the server.
-    - Create production `.env` files for each service.
-    - Run `docker-compose -f docker-compose.prod.yml up -d` to start all services.
+**B. Build the Frontend Image**
 
-4.  **Set Up a Reverse Proxy (Example with Nginx):**
-    - Install Nginx on the server.
-    - Configure Nginx to act as a reverse proxy. It will receive all traffic on port 443 (HTTPS) and route it to the correct Docker container based on the domain name.
-      - `your-domain.com` -> `http://localhost:3000` (Next.js frontend)
-      - `api.your-domain.com` -> `http://localhost:3001` (NestJS backend)
-      - `auth.your-domain.com` -> `http://localhost:8080` (Keycloak)
-    - Use Certbot to obtain and automatically renew free SSL certificates from Let's Encrypt.
+The Next.js frontend requires public environment variables to be available at build time. You must pass them as build arguments.
 
-This setup provides a secure, scalable, and manageable production environment.
+```bash
+# Navigate to the frontend directory
+cd ../frontend
+
+# Build the image, providing the necessary ARGs
+docker build \
+  --build-arg BACKEND_URL=https://api.your-domain.com \
+  --build-arg NEXT_PUBLIC_KEYCLOAK_URL=https://auth.your-domain.com \
+  --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=worksheet \
+  --build-arg NEXT_PUBLIC_BASE_URL=https://your-domain.com \
+  --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=<Your nextjs client id on server> \
+
+  -t <your-username>/worksheet-frontend:latest .
+
+# Push the image
+docker push <your-username>/worksheet-frontend:latest
+```
+
+### 2. Prepare the Server
+
+1.  **Clone the Repository:**
+
+    - Create a folder to hold your worksheet instances files
+
+2.  **Create Environment Files:**
+    Create two files on your server: `.env.backend` and `.env.frontend`. Populate them with your production secrets and configuration.
+
+    **`.env.backend`:**
+
+    ```env
+    # Backend Port
+    PORT=3001
+
+    # JWT Secret
+    SECRET= # Generate a strong secret (e.g., using `openssl rand -base64 32`)
+
+    # Database (points to your existing Postgres instance)
+    DATABASE_URL="postgresql://<user>:<password>@<postgres-host>:<port>/<db>?schema=public"
+
+    # Frontend URL for CORS
+    FRONTEND_URL=https://your-domain.com
+
+    # Keycloak (points to your existing Keycloak instance)
+    KEYCLOAK_REALM=worksheet
+    KEYCLOAK_CLIENT_ID=nestjs-client
+    KEYCLOAK_CLIENT_SECRET=<your-nestjs-client-secret>
+    KEYCLOAK_AUTH_URL=https://auth.your-domain.com
+    ```
+
+    **`.env.frontend`:**
+
+    ```env
+    # Public URLs
+    NEXT_PUBLIC_KEYCLOAK_URL="https://auth.pohjosenpaja.fi"
+    NEXT_PUBLIC_KEYCLOAK_REALM="worksheet"
+
+    # NextAuth.js Configuration
+    NEXTAUTH_URL=https://your-domain.com
+    NEXTAUTH_SECRET=<generate-a-strong-secret-key>
+
+    # Keycloak Credentials for NextAuth.js
+    KEYCLOAK_CLIENT_ID=nextjs-client
+    KEYCLOAK_CLIENT_SECRET=<your-nextjs-client-secret>
+    KEYCLOAK_AUTH_URL=https://auth.your-domain.com
+    KEYCLOAK_REALM=worksheet
+
+    # Other
+    BACKEND_URL="http://worksheet_backend:3001"
+    ```
+
+3.  **Create Production Docker Compose File:**
+    Create a `docker-compose.prod.yml` file in the root of the project directory. This file will pull your pre-built images and connect them.
+
+    ```yaml
+    services:
+      frontend:
+        image: <your-username>/worksheet-frontend:latest
+        container_name: worksheet_frontend
+        restart: unless-stopped
+        ports:
+          - "9000:3000"
+        env_file:
+          - .env.frontend
+        networks:
+          - app_network
+
+      backend:
+        image: <your-username>/worksheet-backend:latest
+        container_name: worksheet_backend
+        restart: unless-stopped
+        ports:
+          - "9001:3001"
+        env_file:
+          - .env.backend
+        networks:
+          - db_network # For Keycloak/Postgres
+          - app_network # For frontend
+        extra_hosts:
+          # Ensures backend can reach Keycloak if it's running on the host
+          - "auth.your-domain.com:host-gateway"
+
+    networks:
+      app_network:
+        driver: bridge
+      db_network:
+        # This network must already exist and be used by your
+        # Keycloak and PostgreSQL containers.
+        external: true
+    ```
+
+### 3. Run the Application
+
+Start the services using your production compose file.
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 4. Set Up a Reverse Proxy
+
+Configure a reverse proxy (like Nginx) to route traffic to your containers and handle SSL.
+
+#### YOUR REVERSE PROXY MUST BE ONLY ACCEPTING HTTPS REQUESTS
+
+- `your-domain.com` -> `http://localhost:9000` (Frontend)
+- `api.your-domain.com` -> `http://localhost:9001` (Backend)
+
+Your reverse proxy should also be configured to handle traffic for `auth.your-domain.com` if it's routing to your Keycloak instance. Use a tool like Certbot to secure your domains with free SSL certificates.
