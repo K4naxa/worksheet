@@ -225,13 +225,13 @@ NODE_ENV=development
 BACKEND_URL=http://localhost:3001
 
 # NextAuth.js Configuration
-NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET= # Generate a strong secret (e.g., using `openssl rand -base64 32`)
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 # Keycloak Credentials for NextAuth.js
-KEYCLOAK_CLIENT_ID=nextjs-client
 KEYCLOAK_CLIENT_SECRET= # Get your Keycloak client secret from the Keycloak admin console
 NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080
+NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=nextjs-client
 NEXT_PUBLIC_KEYCLOAK_REALM=worksheet
 ```
 
