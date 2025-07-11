@@ -50,7 +50,7 @@ The application provides an intuitive calendar interface for logging daily entri
     </td>
     <td align="center">
       <strong>Home Page (Calendar)</strong><br>
-      <img src="https://github.com/K4naxa/worksheet/blob/main/Other/HomePage.png" alt="Home Page Screenshot" width="400">
+      <img src="https://github.com/K4naxa/worksheet/blob/main/Other/Homepage.png" alt="Home Page Screenshot" width="400">
     </td>
   </tr>
   <tr>
