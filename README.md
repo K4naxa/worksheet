@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/user-attachments/assets/2f17079b-0078-43d7-8495-257a6e133c94" alt="Application Logo" width="120" height="120">
+  <img src="https://github.com/K4naxa/worksheet/blob/main/Other/applicationLogo.png" alt="Application Logo" width="120" height="120">
   <h1>Työharjoittelu Seuranta</h1>
   <p>
     Moderni ja intuitiivinen työpäiväkirja opiskelijoille työharjoittelun seurantaan.
@@ -46,21 +46,21 @@ The application provides an intuitive calendar interface for logging daily entri
   <tr>
     <td align="center">
       <strong>Login Page</strong><br>
-      <img src="YOUR_LOGIN_SCREENSHOT_URL_HERE" alt="Login Page Screenshot" width="400">
+      <img src="https://github.com/K4naxa/worksheet/blob/main/Other/LoginScreen.png" alt="Login Page Screenshot" width="400">
     </td>
     <td align="center">
       <strong>Home Page (Calendar)</strong><br>
-      <img src="YOUR_HOME_SCREENSHOT_URL_HERE" alt="Home Page Screenshot" width="400">
+      <img src="https://github.com/K4naxa/worksheet/blob/main/Other/HomePage.png" alt="Home Page Screenshot" width="400">
     </td>
   </tr>
   <tr>
     <td align="center">
       <strong>Profile & Settings</strong><br>
-      <img src="YOUR_PROFILE_SCREENSHOT_URL_HERE" alt="Profile Page Screenshot" width="400">
+      <img src="https://github.com/K4naxa/worksheet/blob/main/Other/ProfilePage.png" alt="Profile Page Screenshot" width="400">
     </td>
     <td align-="center">
       <strong>Workday Modal</strong><br>
-      <img src="YOUR_MODAL_SCREENSHOT_URL_HERE" alt="Workday Modal Screenshot" width="400">
+      <img src="https://github.com/K4naxa/worksheet/blob/main/Other/WorkdayModal.png" alt="Workday Modal Screenshot" width="400">
     </td>
   </tr>
 </table>
