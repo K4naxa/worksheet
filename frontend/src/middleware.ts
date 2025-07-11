@@ -20,6 +20,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // If the request is for a public route, allow it without authentication
+  if (publicRoutes.includes(pathname)) {
+    console.log("✅ Middleware: Public route, allowing through");
+    return NextResponse.next();
+  }
+
   // 2. Get the token from the request
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
@@ -33,15 +39,6 @@ export async function middleware(req: NextRequest) {
   const isRegisterRoute = pathname === "/register";
 
   // 4. Decision logic
-
-  if (!isAuthenticated) {
-    if (isPublicRoute) {
-      console.log("✅ Middleware: Public route, allowing through");
-      return NextResponse.next();
-    }
-    console.log("🚫 Middleware: No session found, redirecting to login");
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
 
   if (isAuthenticated) {
     // Check if registration is completed

@@ -1,20 +1,14 @@
-version: '3.8'
+name: Worksheet-stack
 services:
-  postgres:
+  db:
     image: postgres:latest
+    container_name: postgres-db
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: root
       POSTGRES_PASSWORD: root
       POSTGRES_DB: worksheet
     ports:
     - "5432:5432"
-    volumes:
-    - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   adminer:
     image: adminer
@@ -22,26 +16,15 @@ services:
     ports:
     - "8081:8080"
     depends_on:
-    - postgres
+    - db
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/worksheet
-      KC_DB_USERNAME: postgres
-      KC_DB_PASSWORD: root
-      KC_HOSTNAME: localhost
-      KC_PROXY: edge
-      KC_HTTP_ENABLED: "true"
     ports:
     - "8080:8080"
-    - "8443:8443"
-    depends_on:
-      postgres:
-        condition: service_healthy
     volumes:
     - ./keycloak-themes:/opt/keycloak/themes
     command: [ "start-dev" ]

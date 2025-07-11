@@ -95,77 +95,109 @@ Follow these steps to get the full development environment running on your local
 
 ### 1. Clone the Repository
 
-Clone both the frontend and backend repositories to your local machine.
-
 ```bash
-# Clone the frontend
-git clone your-repo-fork-url
-cd frontend
-
-
+git clone https://github.com/K4naxa/worksheet.git
+cd worksheet
 ```
 
 ### 2. Set Up Keycloak & Database with Docker
 
 The easiest way to run Keycloak and PostgreSQL is with Docker Compose.
 
-1.  Navigate to the frontend project directory.
-2.  You will find a `docker-compose.yml` file. Before running it, open the file and change the default passwords for `POSTGRES_PASSWORD` and `KEYCLOAK_ADMIN_PASSWORD`.
+1.  Navigate to the root of the project directory.
+2.  You will find a `docker-compose.yml` file. The default credentials are suitable for local development.
 3.  Run the following command to start the services in the background:
 
 ```bash
 docker-compose up -d
 ```
 
-This will start two containers:
+This will start three containers:
 
 - **Keycloak:** Accessible at `http://localhost:8080`
-- **PostgreSQL:** The database for Keycloak.
+- **PostgreSQL:** The database for Keycloak and the application.
+- **Adminer:** A database management tool accessible at `http://localhost:8081`
 
 ### 3. Configure Keycloak
 
-You need to configure a realm, a client, and users in Keycloak.
+You need to configure a realm and two clients (one for the frontend, one for the backend).
 
 1.  **Go to the Keycloak Admin Console:** `http://localhost:8080`
-2.  Log in with the admin credentials you set in `docker-compose.yml` (default: `admin/your_strong_admin_password_here`).
+2.  Log in with the default admin credentials: `admin` / `admin`.
 3.  **Create a new Realm:**
-    - Click "Create Realm".
-    - Give it a name (e.g., `my-app-realm`).
-4.  **Create a Client:**
-    - Go to "Clients" and click "Create client".
-    - **Client ID:** `nextjs-client` (or as defined in your backend)
-    - **Valid Redirect URIs:** `http://localhost:3000/*`
+
+    - Go to **"Manage realms"** and click **"Create Realm"**.
+    - **Realm name:** `worksheet`
+    - Click **"Create"**.
+
+4.  **Create the Backend Client (NestJS):**
+
+    - Go to **"Clients"** and click **"Create client"**.
+    - **Client ID:** `nestjs-client`
+    - Click **"Next"**.
+    - **Client authentication:** `On`
+    - **Authorization:** `Off`
+    - **Standard flow:** `Off`
+    - **Service accounts roles:** `On`
+    - Click **"Next"**.
+    - Click **"Save"**.
+    - In the client settings, go to the **"Service account roles"** tab.
+    - Click **"Assign role"**.
+    - Filter by "clients" and select `manage-users`. Click **"Assign"**. This allows the backend to manage users.
+    - Go to the **"Credentials"** tab.
+    - Copy the **Client secret**. You will need this for the backend's `.env` file.
+
+5.  **Create the Frontend Client (Next.js):**
+
+    - Go to **"Clients"** and click **"Create client"**.
+    - **Client ID:** `nextjs-client`
+    - Click **"Next"**.
+    - **Client authentication:** `On`
+    - Click **"Next"**.
+    - **Valid redirect URIs:** `http://localhost:3000/*`
+    - **Valid post logout redirect URIs:** `http://localhost:3000/*`
     - **Web Origins:** `http://localhost:3000`
-    - Save the client.
-5.  **Create Users:**
-    - Go to "Users" and create one or more test users.
-    - Set a password for each user in the "Credentials" tab.
+    - Click **"Save"**.
+    - Go to the **"Credentials"** tab.
+    - Copy the **Client secret**. You will need this for the backend's `.env` file.
+
+6.  **Allow users to register:**
+    - Go to **"Realm settings"** and click **"Login"**.
+    - Set **User registration** `On`.
+    - Set **Remember me** `On`.
+    - Set **Login with email** `On`.
 
 ### 4. Set Up Backend (NestJS)
 
-1.  Navigate to your backend project directory.
+1.  Navigate to the backend project directory: `cd backend`
 2.  Install dependencies:
 
 ```bash
 npm install
 ```
 
-3.  Create a `.env` file and configure it with your database and Keycloak settings. It should look similar to this:
+3.  Create a `.env` file in the `backend` directory and add the following, replacing `<your-nestjs-client-secret>` with the secret you copied earlier:
 
 ```env
+PORT=3001
 # Database
-DATABASE_URL="postgresql://<user>:<password>@localhost:5432/<db>?schema=public"
+DATABASE_URL="postgresql://root:root@localhost:5432/worksheet?schema=public"
+# JWT Secret
+JWT_SECRET= # Generate a strong secret (e.g., using `openssl rand -base64 32`)
 
+# Frontend URL for CORS
+FRONTEND_URL=http://localhost:3000
 # Keycloak
-KEYCLOAK_BASE_URL=http://localhost:8080
-KEYCLOAK_REALM=my-app-realm
-KEYCLOAK_CLIENT_ID=nextjs-client
+KEYCLOAK_REALM=worksheet
+KEYCLOAK_CLIENT_ID=nestjs-client
+KEYCLOAK_CLIENT_SECRET= # Get your Keycloak client secret from the Keycloak admin console
+KEYCLOAK_AUTH_URL=http://localhost:8080
 ```
 
 4.  Run database migrations:
 
 ```bash
-npx prisma migrate dev
+npx prisma migrate dev && npx prisma generate
 ```
 
 5.  Start the backend server:
@@ -174,41 +206,39 @@ npx prisma migrate dev
 npm run start:dev
 ```
 
-The backend API should now be running, typically on `http://localhost:3001`.
+The backend API will be running on `http://localhost:3001`.
 
 ### 5. Set Up Frontend (Next.js)
 
-1.  Navigate to your frontend project directory.
+1.  Open a new terminal and navigate to the frontend project directory: `cd frontend`
 2.  Install dependencies:
 
 ```bash
 npm install
 ```
 
-3.  Create a `.env.local` file. This file contains the environment variables needed for the Next.js app to connect to the backend and Keycloak.
+3.  Create a `.env` file in the `frontend` directory. Add the following, generating a strong secret for `NEXTAUTH_SECRET`.
 
 ```env
+NODE_ENV=development
 # Backend API URL
 BACKEND_URL=http://localhost:3001
 
 # NextAuth.js Configuration
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET= # Generate a strong secret key (e.g., using `openssl rand -base64 32`)
+NEXTAUTH_SECRET= # Generate a strong secret (e.g., using `openssl rand -base64 32`)
 
 # Keycloak Credentials for NextAuth.js
-KEYCLOAK_ID=nextjs-client
-KEYCLOAK_SECRET= # Get this from the "Credentials" tab of your client in Keycloak
-KEYCLOAK_ISSUER=http://localhost:8080/realms/my-app-realm
-
-# Public Keycloak URLs for the client
+KEYCLOAK_CLIENT_ID=nextjs-client
+KEYCLOAK_CLIENT_SECRET= # Get your Keycloak client secret from the Keycloak admin console
 NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080
-NEXT_PUBLIC_KEYCLOAK_REALM=my-app-realm
+NEXT_PUBLIC_KEYCLOAK_REALM=worksheet
 ```
 
 4.  Start the frontend development server:
 
 ```bash
-npm run dev
+npx next dev
 ```
 
 Your application should now be running at `http://localhost:3000`.
