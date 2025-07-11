@@ -1,8 +1,9 @@
+version: '3.8'
 services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_USER: root
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       POSTGRES_DB: worksheet
     ports:
@@ -14,6 +15,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+    - "8081:8080"
+    depends_on:
+    - postgres
 
   keycloak:
     image: quay.io/keycloak/keycloak:21.1.1
@@ -36,39 +45,6 @@ services:
     volumes:
     - ./keycloak-themes:/opt/keycloak/themes
     command: [ "start-dev" ]
-
-  backend:
-    build: ./backend
-    ports:
-    - "3001:3000"
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: worksheet
-      JWT_SECRET: your_secret_key
-      KEYCLOAK_ISSUER: http://localhost:8080/realms/worksheet-realm
-      KEYCLOAK_CLIENT_ID: worksheet-backend
-      KEYCLOAK_CLIENT_SECRET: your_client_secret
-      KEYCLOAK_REALM: worksheet-realm
-    depends_on:
-      postgres:
-        condition: service_healthy
-      keycloak:
-        condition: service_started
-
-  frontend:
-    build: ./frontend
-    ports:
-    - "3000:3000"
-    environment:
-      NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
-      NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8080
-      KEYCLOAK_CLIENT_ID: worksheet-frontend
-    depends_on:
-      backend:
-        condition: service_healthy
 
 volumes:
   pgdata:
