@@ -53,7 +53,7 @@ export const authOptions: AuthOptions = {
   debug: process.env.NODE_ENV === "development",
   providers: [
     KeycloakProvider({
-      clientId: process.env.KEYCLOAK_CLIENT_ID!,
+      clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID!,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
       issuer: `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}`,
     }),
@@ -102,7 +102,7 @@ export const authOptions: AuthOptions = {
         try {
           const tokenUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/token`;
           const params = new URLSearchParams({
-            client_id: process.env.KEYCLOAK_CLIENT_ID!,
+            client_id: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID!,
             client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
             grant_type: "refresh_token",
             refresh_token: token.refreshToken as string,

@@ -338,7 +338,7 @@ docker push <your-username>/worksheet-frontend:latest
     NEXTAUTH_SECRET=<generate-a-strong-secret-key>
 
     # Keycloak Credentials for NextAuth.js
-    KEYCLOAK_CLIENT_ID=nextjs-client
+    NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=nextjs-client
     KEYCLOAK_CLIENT_SECRET=<your-nextjs-client-secret>
     KEYCLOAK_AUTH_URL=https://auth.your-domain.com
     KEYCLOAK_REALM=worksheet
