@@ -120,9 +120,7 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
   });
 
   // --- 5. Data Rows ---
-  const sortedWorkdays = [...workdays].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  const sortedWorkdays = [...workdays].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   sortedWorkdays.forEach((day) => {
     const date = new Date(day.date);
@@ -133,10 +131,9 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
     } else if (day.mealLocation === "other") {
       mealLocationDisplay = "Muu";
     } else {
-      mealLocationDisplay =
-        mealLocationTranslations[day.mealLocation] || day.mealLocation;
+      mealLocationDisplay = mealLocationTranslations[day.mealLocation] || day.mealLocation;
     }
-    
+
     const rowData = {
       date: date.toLocaleDateString("fi-FI"),
       weekday: getFinnishWeekday(date),
@@ -163,14 +160,16 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
 
   // A. Calculate the summaries
   const totalDays = workdays.length;
-  const sickDays = workdays.filter(day => day.isSickday).length;
+  const sickDays = workdays.filter((day) => day.isSickday).length;
   const workDays = totalDays - sickDays;
-  const totalHours = workdays.reduce((sum, day) => sum + (day.isSickday ? 0 : (day.hours || 0)), 0);
-  const mealCounts = workdays.filter(day => !day.isSickday).reduce((counts, day) => {
-    const location = day.mealLocation;
-    counts[location] = (counts[location] || 0) + 1;
-    return counts;
-  }, {} as { [key: string]: number });
+  const totalHours = workdays.reduce((sum, day) => sum + (day.isSickday ? 0 : day.hours || 0), 0);
+  const mealCounts = workdays
+    .filter((day) => !day.isSickday)
+    .reduce((counts, day) => {
+      const location = day.mealLocation;
+      counts[location] = (counts[location] || 0) + 1;
+      return counts;
+    }, {} as { [key: string]: number });
 
   // B. Add spacing before the summary table
   worksheet.addRows([[], []]);
@@ -195,9 +194,7 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
   // D. Add work statistics subheader
   const workStatsHeaderRow = worksheet.addRow(["Työ tilastot"]);
   const workStatsHeaderCell = workStatsHeaderRow.getCell(1);
-  worksheet.mergeCells(
-    `A${workStatsHeaderCell.row}:F${workStatsHeaderCell.row}`
-  );
+  worksheet.mergeCells(`A${workStatsHeaderCell.row}:F${workStatsHeaderCell.row}`);
   workStatsHeaderCell.font = {
     bold: true,
     size: 11,
@@ -275,13 +272,10 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
   };
 
   // G. Add meal summary data
-  const mealSummaryData = Object.entries(mealCounts).map(
-    ([location, count]) => {
-      const translatedLabel =
-        mealLocationTranslations[location] || "Muu ruokailu";
-      return { label: translatedLabel, value: `${count} kpl` };
-    }
-  );
+  const mealSummaryData = Object.entries(mealCounts).map(([location, count]) => {
+    const translatedLabel = mealLocationTranslations[location] || "Muu ruokailu";
+    return { label: translatedLabel, value: `${count} kpl` };
+  });
 
   mealSummaryData.forEach((item, index) => {
     const row = worksheet.addRow([]);
@@ -349,10 +343,7 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
     const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-    const fileName = `Tyopäiväkirja_${user.name?.replace(
-      /\s+/g,
-      "_"
-    )}_${new Date().toLocaleDateString("fi-FI")}.xlsx`;
+    const fileName = `Tyopäiväkirja_${user.name?.replace(/\s+/g, "_")}_${new Date().toLocaleDateString("fi-FI")}.xlsx`;
     saveAs(blob, fileName);
   });
 };
