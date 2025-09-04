@@ -106,14 +106,23 @@ export const Calendar: React.FC<CalendarProps> = ({ userWorkdays, workDays, onDa
 
       const hasWorkDayEntry = workDayDatesSet.has(dateStr);
       const isScheduledWorkday = workDays.includes(dayDate.getUTCDay());
+      const isSickday = hasWorkDayEntry
+        ? userWorkdays.find(
+            (wd) => (typeof wd.date === "string" ? wd.date : wd.date.toISOString()).split("T")[0] === dateStr
+          )?.isSickday
+        : false;
       // Make all days with a workday entry selectable, as well as scheduled workdays and today
-      const isSelectable = isScheduledWorkday || isToday || hasWorkDayEntry;
+      const isSelectable = isScheduledWorkday || hasWorkDayEntry;
 
       const dayClasses = `
         relative p-2 w-full h-12 rounded-lg text-sm font-medium transition-all duration-150 group
-        ${isToday ? "border-2 border-white/50" : ""}
-        ${!isSelectable ? "glass-card text-secondary opacity-30 pointer-events-none" : ""}
-        ${hasWorkDayEntry ? "bg-gradient-to-r from-success-400 to-success-500 text-white shadow-md" : ""}
+        ${isToday && "border-2 border-white/50"}
+        ${!isSelectable && "glass-card text-secondary opacity-30 pointer-events-none"}
+        ${hasWorkDayEntry && !isSickday && "bg-gradient-to-r from-success-400 to-success-500 text-white shadow-md"}
+        ${
+          isSickday &&
+          "bg-gradient-to-r from-amber-400/50 to-amber-500 text-white border border-amber-500 font-semibold"
+        }
         ${
           isSelectable && !hasWorkDayEntry
             ? "glass-card text-secondary glass-card-hover hover:scale-105 hover:shadow-md"

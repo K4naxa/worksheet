@@ -1,12 +1,18 @@
 "use client";
 import { deleteWorkdayAction, saveWorkdayAction } from "@/app/actions";
 import { ConfirmationModal, WorkDayModal, WorkDaysList } from "@/components";
-import { Workday, WorkStats } from "@/types";
+import { User, Workday } from "@/types";
 import { startTransition, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDate, formatDateFinLong } from "@/utils/formatUtils";
 
-export function WorkdayListPageClient({ initialWorkdays }: { initialWorkdays: Workday[] }) {
+export function WorkdayListPageClient({
+  initialWorkdays,
+  initialProfile,
+}: {
+  initialWorkdays: Workday[];
+  initialProfile: User | null;
+}) {
   const router = useRouter();
   // --------------------------------------------------------------------------
   // Props & Derived State
@@ -24,11 +30,13 @@ export function WorkdayListPageClient({ initialWorkdays }: { initialWorkdays: Wo
     isOpen: boolean;
     selectedDate: string;
     existingWorkday?: Workday;
+    defaultWorkdayLength: number;
     isEditing?: boolean;
   }>({
     isOpen: false,
     selectedDate: "",
     existingWorkday: undefined,
+    defaultWorkdayLength: initialProfile?.defaultWorkdayLength || 8,
     isEditing: false,
   });
 
@@ -37,14 +45,6 @@ export function WorkdayListPageClient({ initialWorkdays }: { initialWorkdays: Wo
 
   /** State to track which date is pending deletion. */
   const [dateToDelete, setDateToDelete] = useState<string | null>(null);
-
-  /** State to hold calculated statistics. */
-  const [stats, setStats] = useState<WorkStats>({
-    totalDays: 0,
-    totalHours: 0,
-    practiceProgress: 0,
-    mealDistribution: { school: 0, work: 0, other: 0 },
-  });
 
   /** Dedicated loading state for the deletion process to provide feedback on the confirmation button. */
   const [isDeleting, setIsDeleting] = useState(false);
@@ -78,6 +78,7 @@ export function WorkdayListPageClient({ initialWorkdays }: { initialWorkdays: Wo
     setModalData({
       isOpen: true,
       selectedDate: date,
+      defaultWorkdayLength: modalData.defaultWorkdayLength,
       existingWorkday: workday,
       isEditing: isEditing || false, // Default to false if not provided
     });
@@ -85,7 +86,13 @@ export function WorkdayListPageClient({ initialWorkdays }: { initialWorkdays: Wo
 
   /** Closes the WorkDayModal and resets its data. */
   const closeModal = useCallback(() => {
-    setModalData({ isOpen: false, selectedDate: "", existingWorkday: undefined, isEditing: false });
+    setModalData({
+      isOpen: false,
+      selectedDate: "",
+      existingWorkday: undefined,
+      isEditing: false,
+      defaultWorkdayLength: modalData.defaultWorkdayLength,
+    });
   }, []);
 
   // --------------------------------------------------------------------------

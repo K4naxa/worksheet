@@ -1,5 +1,11 @@
 import { MealLocation } from '@prisma/client';
-import { IsDate, IsString, IsNumber, MaxLength } from 'class-validator';
+import {
+  IsDate,
+  IsString,
+  IsNumber,
+  MaxLength,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateWorkdayDto {
   @IsString()
@@ -11,16 +17,15 @@ export class CreateWorkdayDto {
   @MaxLength(300)
   activities: string;
 
+  @IsBoolean()
+  isSickday: boolean;
+
   @IsString()
   @MaxLength(300)
   learnings: string;
 
   @IsString()
   mealLocation: MealLocation; // Enum type for meal location
-
-  @IsString()
-  @MaxLength(100)
-  mealLocationOther?: string; // Optional, only if mealLocation is "other"
 
   @IsNumber()
   hours: number;

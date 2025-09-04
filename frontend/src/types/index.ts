@@ -2,9 +2,9 @@ export interface CreateWorkDay {
   date: string; // ISO date string
   activities: string;
   learnings: string;
+  isSickday: boolean;
   hours: number;
   mealLocation: "school" | "work" | "other";
-  mealLocationOther?: string; // Optional, only if mealLocation is "other"
 }
 
 export interface WorkPracticeSettings {
@@ -28,6 +28,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  defaultWorkdayLength: number; // Default workday length in hours
   registrationCompleted: boolean;
   workdays?: number[] | null; // Array of integers representing workdays (0 = Sunday, 1 = Monday, etc.)
   company: string | null;
@@ -42,8 +43,8 @@ export interface Workday {
   date: string | Date;
   activities: string;
   learnings: string;
+  isSickday: boolean;
   mealLocation: "school" | "work" | "other"; // Enum type for meal location
-  mealLocationOther: string | null; // Optional, only if mealLocation is "other"
   hours: number;
 
   createdAt: Date;
@@ -56,5 +57,6 @@ export interface RegistrationComplition {
   instructor: string;
   startDate: string; // ISO date string
   endDate: string; // ISO date string
+  defaultWorkdayLength: number; // Default workday length in hours
   workdays: number[]; // Array of integers representing workdays (0 = Sunday, 1 = Monday, etc.)
 }

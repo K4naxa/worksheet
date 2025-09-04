@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { AlertOctagon, Briefcase, Calendar, Edit, LinkIcon, Save, Settings, User2 } from "lucide-react";
+import { AlertOctagon, Briefcase, Calendar, ClockIcon, Edit, LinkIcon, Save, Settings, User2 } from "lucide-react";
 
 import { ConfirmationModal } from "@/components";
 import { updateUserProfileAction, deleteUserAccountAction } from "../../actions";
@@ -48,6 +48,7 @@ export function ProfilePageClient({ initialProfile }: { initialProfile: User }) 
     endDate: initialProfile.end_date ? new Date(initialProfile.end_date).toISOString().split("T")[0] : "",
     company: initialProfile.company || "",
     instructor: initialProfile.instructor || "",
+    defaultWorkdayLength: initialProfile.defaultWorkdayLength || 8,
     workdays: initialProfile.workdays || [],
   });
 
@@ -139,6 +140,7 @@ export function ProfilePageClient({ initialProfile }: { initialProfile: User }) 
       endDate: initialProfile.end_date ? new Date(initialProfile.end_date).toISOString().split("T")[0] : "",
       workdays: initialProfile.workdays || [],
       company: initialProfile.company || "",
+      defaultWorkdayLength: initialProfile.defaultWorkdayLength || 8,
       instructor: initialProfile.instructor || "",
     });
   };
@@ -277,6 +279,69 @@ export function ProfilePageClient({ initialProfile }: { initialProfile: User }) 
               </div>
             </div>
           </div>
+
+          {/* Workday default length selection */}
+
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <ClockIcon className="w-5 h-5 text-muted" />
+              <label className="text-primary font-medium">Työtunnit</label>
+            </div>
+            {isEditing ? (
+              <div className="flex items-center gap-4 select-none ">
+                <div
+                  className="w-full"
+                  onMouseDown={(e) => {
+                    // Prevent accidental drag/select when clicking anywhere in the container except the thumb
+                    if (e.target === e.currentTarget) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onDragStart={(e) => e.preventDefault()}
+                >
+                  <input
+                    type="range"
+                    min="0.25"
+                    max="10"
+                    step="0.25"
+                    value={formData.defaultWorkdayLength}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        defaultWorkdayLength: parseFloat(e.target.value),
+                      })
+                    }
+                    className=" range-themed"
+                    disabled={isFormDisabled}
+                  />
+                  <div className="flex justify-between text-xs text-muted pt-1">
+                    <span>15min</span>
+                    <span className="-ml-5">5h</span>
+                    <span>10h</span>
+                  </div>
+                </div>
+                <div className="bg-white/10 rounded-md px-3 py-1.5 w-28 flex flex-col justify-start text-start text-primary select-text">
+                  <span>{`${Math.floor(formData.defaultWorkdayLength)} tuntia`}</span>
+                  <span>{` ${Math.round((formData.defaultWorkdayLength % 1) * 60)} min`}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-black/10 text-secondary">
+                {formData.defaultWorkdayLength > 0 ? (
+                  <>
+                    {" "}
+                    <span>{`${Math.floor(formData.defaultWorkdayLength)} tuntia`}</span>
+                    {(formData.defaultWorkdayLength % 1) * 60 !== 0 && (
+                      <span>{` ${Math.round((formData.defaultWorkdayLength % 1) * 60)} minuuttia`}</span>
+                    )}
+                  </>
+                ) : (
+                  "Ei työtunteja."
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Work Days */}
           <div className="space-y-3">
             <p className="text-primary font-medium">Työpäivät viikossa</p>

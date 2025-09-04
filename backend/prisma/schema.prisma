@@ -36,6 +36,7 @@ model User {
   instructor String?
   start_date DateTime?
   end_date DateTime?
+  defaultWorkdayLength Float? @default(8)
 
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
@@ -50,10 +51,10 @@ model User {
   model Workday{
     id String @id @default(uuid())
     date DateTime
-    activities String
-    learnings String
+    isSickday Boolean @default(false)
+    activities String?
+    learnings String?
     mealLocation MealLocation // uses MealLocation enum
-    mealLocationOther String? // Optional, only if mealLocation is "other"
     hours Float
 
     userId String

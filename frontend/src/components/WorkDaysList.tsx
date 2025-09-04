@@ -30,7 +30,7 @@ const getMealLocationDisplay = (workDay: Workday) => {
     case "work":
       return { icon: "🏢", text: "Työpaikka" };
     case "other":
-      return { icon: "🍽️", text: workDay.mealLocationOther || "Muu" };
+      return { icon: "🍽️", text: "Muu" };
     default:
       return { icon: "❓", text: "Tuntematon" };
   }
@@ -60,9 +60,7 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (workDay) =>
-          workDay.activities.toLowerCase().includes(search) ||
-          workDay.learnings.toLowerCase().includes(search) ||
-          (workDay.mealLocationOther && workDay.mealLocationOther.toLowerCase().includes(search))
+          workDay.activities.toLowerCase().includes(search) || workDay.learnings.toLowerCase().includes(search)
       );
     }
 
@@ -454,6 +452,46 @@ export const WorkDaysList: React.FC<WorkDaysListProps> = ({ workDays, onEdit, on
           <div className="space-y-4">
             {currentWorkDays.map((workDay) => {
               const formattedDate = formatDateFinLong(workDay.date);
+              const isSickday = workDay.isSickday;
+
+              if (isSickday) {
+                return (
+                  <div
+                    key={workDay.id}
+                    className="glass-card rounded-xl p-4 hover:bg-white/15 transition-all overflow-hidden bg-gradient-to-r from-amber-400/5 to-amber-500/10 text-white border border-amber-500"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-muted" />
+                        <h3 className="font-semibold text-primary">{formattedDate}</h3>
+                      </div>
+                      <div className="flex flex-col gap-2 justify-center sm:flex-row items-center">
+                        <button
+                          onClick={() => onEdit(workDay)}
+                          className="p-1.5 rounded-lg glass-card glass-card-hover text-primary transition-colors"
+                          title="Muokkaa työpäivää"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => onDelete(formatDate(workDay.date))}
+                          className="p-1.5 btn-danger glass-card "
+                          title="Poista työpäivä"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <div className="text-2xl">🤒</div>
+                      <span className="text-lg font-medium text-amber-400">Sairaspäivä</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Regular workday
               const mealDisplay = getMealLocationDisplay(workDay);
               const hours = Math.floor(workDay.hours);
               const minutes = Math.round((workDay.hours % 1) * 60);

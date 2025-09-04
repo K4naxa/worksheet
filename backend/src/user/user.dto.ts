@@ -1,4 +1,4 @@
-import { IsArray, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsNumber, IsString, MaxLength } from 'class-validator';
 
 export class RegistrationFormDto {
   @IsString()
@@ -18,4 +18,7 @@ export class RegistrationFormDto {
   endDate: string; // ISO date string
   @IsArray()
   workdays: number[];
+
+  @IsNumber()
+  defaultWorkdayLength: number; // Default workday length in hours
 }

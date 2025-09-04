@@ -26,13 +26,10 @@ export class WorkdayService {
             id: existingWorkday.id,
           },
           data: {
+            isSickday: workday.isSickday,
             activities: workday.activities,
             learnings: workday.learnings,
             mealLocation: workday.mealLocation,
-            mealLocationOther:
-              workday.mealLocation === 'other'
-                ? workday.mealLocationOther
-                : null,
             hours: workday.hours,
           },
           select: {
@@ -55,16 +52,16 @@ export class WorkdayService {
         data: {
           userId: userId,
           date: formattedDate,
+          isSickday: workday.isSickday,
           activities: workday.activities,
           learnings: workday.learnings,
           mealLocation: workday.mealLocation,
-          mealLocationOther:
-            workday.mealLocation === 'other' ? workday.mealLocationOther : null,
           hours: workday.hours,
         },
         select: {
           id: true,
           userId: true,
+          isSickday: true,
           date: true,
           activities: true,
           learnings: true,
@@ -109,11 +106,11 @@ export class WorkdayService {
         select: {
           id: true,
           userId: true,
+          isSickday: true,
           date: true,
           activities: true,
           learnings: true,
           mealLocation: true,
-          mealLocationOther: true,
           hours: true,
           createdAt: true,
         },

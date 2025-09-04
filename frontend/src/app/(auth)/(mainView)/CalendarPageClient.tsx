@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition, useMemo } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 
 // Components
 import { Calendar, ConfirmationModal, WorkDayModal } from "@/components";
 // Types
-import { Workday, WorkStats, User } from "@/types";
+import { Workday, User } from "@/types";
 // Server Actions
 import { saveWorkdayAction, deleteWorkdayAction } from "@/app/actions";
 // Utils
@@ -43,6 +43,8 @@ export function HomePageClient({
   const profile = initialProfile;
   const workdays = initialWorkdays;
 
+  console.log("profile: ", profile);
+
   // --------------------------------------------------------------------------
   // State
   // --------------------------------------------------------------------------
@@ -52,10 +54,12 @@ export function HomePageClient({
     isOpen: boolean;
     selectedDate: string;
     existingWorkday?: Workday;
+    defaultWorkdayLength: number;
   }>({
     isOpen: false,
     selectedDate: "",
     existingWorkday: undefined,
+    defaultWorkdayLength: profile.defaultWorkdayLength,
   });
 
   /** State for the delete confirmation modal. */
@@ -91,6 +95,7 @@ export function HomePageClient({
    */
   const openModal = useCallback((date: string, workday?: Workday) => {
     setModalData({
+      ...modalData,
       isOpen: true,
       selectedDate: date,
       existingWorkday: workday,
@@ -99,7 +104,7 @@ export function HomePageClient({
 
   /** Closes the WorkDayModal and resets its data. */
   const closeModal = useCallback(() => {
-    setModalData({ isOpen: false, selectedDate: "", existingWorkday: undefined });
+    setModalData({ ...modalData, isOpen: false, selectedDate: "", existingWorkday: undefined });
   }, []);
 
   // --------------------------------------------------------------------------
@@ -215,6 +220,7 @@ export function HomePageClient({
                   (day) => new Date(day.date).toISOString().split("T")[0] === todayDate
                 );
                 setModalData({
+                  ...modalData,
                   isOpen: true,
                   selectedDate: todayDate,
                   existingWorkday,

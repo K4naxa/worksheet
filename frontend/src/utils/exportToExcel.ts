@@ -128,18 +128,21 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
     const date = new Date(day.date);
 
     let mealLocationDisplay = "";
-    if (day.mealLocation === "other") {
-      mealLocationDisplay = day.mealLocationOther || "Muu";
+    if (day.isSickday) {
+      mealLocationDisplay = "Sairauspäivä";
+    } else if (day.mealLocation === "other") {
+      mealLocationDisplay = "Muu";
     } else {
       mealLocationDisplay =
         mealLocationTranslations[day.mealLocation] || day.mealLocation;
     }
+    
     const rowData = {
       date: date.toLocaleDateString("fi-FI"),
       weekday: getFinnishWeekday(date),
-      hours: day.hours,
-      activities: day.activities,
-      learnings: day.learnings,
+      hours: day.isSickday ? "Sairaus" : day.hours,
+      activities: day.isSickday ? "Sairauspäivä" : day.activities,
+      learnings: day.isSickday ? "Sairauspäivä" : day.learnings,
       mealLocation: mealLocationDisplay,
     };
     const row = worksheet.addRow(rowData);
@@ -158,10 +161,12 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
 
   // --- 6. Summary Table ---
 
-  // A. Calculate the summaries (this part remains the same)
+  // A. Calculate the summaries
   const totalDays = workdays.length;
-  const totalHours = workdays.reduce((sum, day) => sum + (day.hours || 0), 0);
-  const mealCounts = workdays.reduce((counts, day) => {
+  const sickDays = workdays.filter(day => day.isSickday).length;
+  const workDays = totalDays - sickDays;
+  const totalHours = workdays.reduce((sum, day) => sum + (day.isSickday ? 0 : (day.hours || 0)), 0);
+  const mealCounts = workdays.filter(day => !day.isSickday).reduce((counts, day) => {
     const location = day.mealLocation;
     counts[location] = (counts[location] || 0) + 1;
     return counts;
@@ -210,7 +215,9 @@ export const exportToExcel = async (user: User, workdays: Workday[]) => {
 
   // E. Add work statistics rows
   const workStatsData = [
-    { label: "Työpäiviä yhteensä", value: `${totalDays} kpl` },
+    { label: "Päiviä yhteensä", value: `${totalDays} kpl` },
+    { label: "Työpäiviä", value: `${workDays} kpl` },
+    { label: "Sairauspäiviä", value: `${sickDays} kpl` },
     { label: "Tunteja yhteensä", value: `${totalHours} h` },
   ];
 

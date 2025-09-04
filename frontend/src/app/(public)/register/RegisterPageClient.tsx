@@ -1,6 +1,6 @@
 "use client";
 import { updateUserProfileAction } from "@/app/actions";
-import { Briefcase, Calendar, LogOut, Save, User2 } from "lucide-react";
+import { Briefcase, Calendar, ClockIcon, LogOut, Save, User2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 
@@ -17,6 +17,7 @@ interface FormData {
   startDate: string;
   endDate: string;
   workdays: number[];
+  defaultWorkdayLength: number; // In hours
 }
 
 const weekDays = [
@@ -47,9 +48,11 @@ export default function RegisterPageClient({}) {
   const [formData, setFormData] = useState<FormData>({
     company: "",
     instructor: "",
+
     startDate: "",
     endDate: "",
     workdays: [1, 2, 3, 4, 5],
+    defaultWorkdayLength: 8,
   });
 
   const validateAndSubmit = async () => {
@@ -227,6 +230,49 @@ export default function RegisterPageClient({}) {
                   className="input-field"
                   required
                 />
+              </div>
+
+              {/* Workday default length selection */}
+              <div className="space-y-3">
+                <label className="text-primary font-medium flex items-center  gap-2">
+                  <ClockIcon /> Oletustyöpäivän pituus
+                </label>
+                <div className="flex items-center gap-4 select-none ">
+                  <div
+                    className="w-full"
+                    onMouseDown={(e) => {
+                      // Prevent accidental drag/select when clicking anywhere in the container except the thumb
+                      if (e.target === e.currentTarget) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onDragStart={(e) => e.preventDefault()}
+                  >
+                    <input
+                      type="range"
+                      min="0.25"
+                      max="10"
+                      step="0.25"
+                      value={formData.defaultWorkdayLength}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          defaultWorkdayLength: parseFloat(e.target.value),
+                        })
+                      }
+                      className=" range-themed"
+                    />
+                    <div className="flex justify-between text-xs text-muted pt-1">
+                      <span>15min</span>
+                      <span className="-ml-5">5h</span>
+                      <span>10h</span>
+                    </div>
+                  </div>
+                  <div className="bg-white/10 rounded-md px-3 py-1.5 w-28 flex flex-col justify-start text-start text-primary select-text">
+                    <span>{`${Math.floor(formData.defaultWorkdayLength)} tuntia`}</span>
+                    <span>{` ${Math.round((formData.defaultWorkdayLength % 1) * 60)} min`}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Workdays Section */}

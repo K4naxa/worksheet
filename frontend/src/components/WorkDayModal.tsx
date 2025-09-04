@@ -31,9 +31,9 @@ const INITIAL_FORM_STATE: CreateWorkDay = {
   date: "",
   activities: "",
   learnings: "",
+  isSickday: false,
   hours: 8,
   mealLocation: "work",
-  mealLocationOther: "",
 };
 
 // ============================================================================
@@ -45,6 +45,7 @@ interface WorkDayModalProps {
     isOpen: boolean;
     selectedDate: string;
     existingWorkday?: Workday;
+    defaultWorkdayLength: number;
     isEditing?: boolean; // Optional flag to indicate if the modal is in edit mode
   };
   onClose: () => void;
@@ -57,17 +58,26 @@ interface WorkDayModalProps {
  * It operates in two modes: 'view' for existing entries and 'edit' for creating or modifying entries.
  */
 export const WorkDayModal: React.FC<WorkDayModalProps> = ({
-  modalData: { isOpen, selectedDate, existingWorkday, isEditing: initialIsEditing },
+  modalData: { isOpen, selectedDate, existingWorkday, isEditing: initialIsEditing, defaultWorkdayLength },
   onClose,
   onSave,
   onDeleteRequest,
 }) => {
+  console.log("WorkDayModal defaultWorkdayLength: ", defaultWorkdayLength);
   // --------------------------------------------------------------------------
   // State
   // --------------------------------------------------------------------------
 
   /** The main state for all form fields. It holds either a full `Workday` or a `CreateWorkDay` object. */
-  const [formData, setFormData] = useState<Workday | CreateWorkDay>(existingWorkday || { ...INITIAL_FORM_STATE });
+  const [formData, setFormData] = useState<Workday | CreateWorkDay>(
+    existingWorkday || { ...INITIAL_FORM_STATE, hours: defaultWorkdayLength, date: selectedDate }
+  );
+
+  console.log("INITIAL_FORM_STATE:", INITIAL_FORM_STATE);
+  console.log("defaultWorkdayLength:", defaultWorkdayLength);
+  console.log("Final initialData:", existingWorkday);
+
+  console.log("WorkDayModal formData: ", formData);
 
   /** Controls whether the form fields are editable or in a read-only view. */
   const [isEditing, setIsEditing] = useState(initialIsEditing || !existingWorkday);
@@ -86,12 +96,9 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
   const isFormDisabled = !isEditing || isLoading;
 
   /** A boolean flag that determines if the 'Save' button should be enabled based on required fields. */
-  const isSaveDisabled =
-    !formData.activities.trim() ||
-    !formData.learnings.trim() ||
-    formData.hours <= 0 ||
-    (formData.mealLocation === "other" && !formData.mealLocationOther?.trim()) ||
-    isLoading;
+  const isSaveDisabled = formData.isSickday
+    ? isLoading // For sick days, only check if loading
+    : !formData.activities.trim() || !formData.learnings.trim() || formData.hours <= 0 || isLoading; // For regular days, validate all fields
 
   // --------------------------------------------------------------------------
   // Effects
@@ -110,11 +117,11 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
         setFormData(existingWorkday);
         setIsEditing(initialIsEditing ?? false); // Use the prop!
       } else {
-        setFormData({ ...INITIAL_FORM_STATE, date: selectedDate });
+        setFormData({ ...INITIAL_FORM_STATE, hours: defaultWorkdayLength, date: selectedDate });
         setIsEditing(true);
       }
     }
-  }, [isOpen, existingWorkday, selectedDate, initialIsEditing]);
+  }, [isOpen, existingWorkday, selectedDate, initialIsEditing, defaultWorkdayLength]);
 
   useModalEffects(isOpen, onClose);
 
@@ -127,8 +134,8 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
    * constructs the data transfer object (DTO), and calls the `onSave` prop.
    */
   const handleSave = async () => {
-    // Client-side validation is already handled by `isSaveDisabled`, but an extra check is good practice.
-    if (isSaveDisabled) {
+    // For sick days, we don't need to validate the other fields
+    if (!formData.isSickday && isSaveDisabled) {
       setError("Täytä kaikki pakolliset kentät.");
       return;
     }
@@ -139,11 +146,11 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
     // Construct the DTO to ensure only necessary fields are sent to the server.
     const workDayDto: CreateWorkDay = {
       date: selectedDate,
-      activities: formData.activities.trim(),
-      learnings: formData.learnings.trim(),
-      hours: formData.hours,
-      mealLocation: formData.mealLocation,
-      ...(formData.mealLocation === "other" && { mealLocationOther: formData.mealLocationOther?.trim() }),
+      isSickday: formData.isSickday,
+      activities: formData.isSickday ? "" : formData.activities.trim(),
+      learnings: formData.isSickday ? "" : formData.learnings.trim(),
+      hours: formData.isSickday ? 0 : formData.hours,
+      mealLocation: formData.isSickday ? "work" : formData.mealLocation,
     };
 
     try {
@@ -210,212 +217,248 @@ export const WorkDayModal: React.FC<WorkDayModalProps> = ({
 
         {/* Form Content */}
         <div className="p-6 space-y-6 overflow-y-auto">
-          {/* Activities Section */}
-          <div className="space-y-3 relative pb-3 -mb-3">
-            <div className="flex items-center space-x-2">
-              <Briefcase className="w-5 h-5 text-muted" />
-              <label className="text-primary font-medium">Mitä teit tänään?</label>
+          {/* Sickday Toggle Section */}
+          {(isEditing || formData.isSickday) && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between bg-amber-400/20 px-2 py-1.5 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="w-5 h-5 text-muted text-amber-500" />
+                  <label className="text-primary font-medium">Sairauspäivä</label>
+                </div>
+                {isEditing ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newIsSickday = !formData.isSickday;
+                      setFormData({
+                        ...formData,
+                        isSickday: newIsSickday,
+                        // Reset other fields to defaults when enabling sickday
+                        ...(newIsSickday && {
+                          activities: "",
+                          learnings: "",
+                          hours: 8,
+                          mealLocation: "work",
+                        }),
+                        // Reset to default workday length when disabling sickday
+                        ...(!newIsSickday &&
+                          formData.isSickday && {
+                            hours: defaultWorkdayLength,
+                          }),
+                      });
+                    }}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      formData.isSickday ? "bg-primary-500" : "bg-gray-600"
+                    }`}
+                    disabled={isFormDisabled}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        formData.isSickday ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                ) : (
+                  <div className="p-2 rounded-lg bg-black/10 text-primary-50 ">Kyllä</div>
+                )}
+              </div>
+              {formData.isSickday && (
+                <div className="text-sm text-muted bg-yellow-500/20 text-yellow-400 p-3 rounded-lg">
+                  Sairauspäivä merkitty. Muut kentät on piilotettu.
+                </div>
+              )}
             </div>
-            {isEditing ? (
-              <textarea
-                value={formData.activities}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    activities: e.target.value,
-                  })
-                }
-                placeholder="Kuvaile päivän pääasialliset aktiviteetit ja tehtävät..."
-                className="input-field resize-none h-24"
-                maxLength={300}
-                required
-              />
-            ) : (
-              <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
-                {formData.activities || <span className="text-muted-foreground">Ei aktiviteetteja.</span>}
-              </div>
-            )}
-            {isEditing && (
-              <div
-                className="text-right text-xs text-muted absolute right-1 bottom-0"
-                style={formData.activities.length == 300 ? { color: "red" } : {}}
-              >
-                {formData.activities.length} / 300
-              </div>
-            )}
-          </div>
+          )}
 
-          {/* Learnings Section */}
-          <div className="space-y-3 relative pb-3 -mb-3">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="w-5 h-5 text-muted" />
-              <label className="text-primary font-medium">Mitä opit?</label>
-            </div>
-            {isEditing ? (
-              <textarea
-                value={formData.learnings}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    learnings: e.target.value,
-                  })
-                }
-                placeholder="Mitä uusia taitoja, tietoja tai oivalluksia sait?"
-                className="input-field resize-none h-24"
-                maxLength={300}
-                required
-                disabled={isLoading}
-              />
-            ) : (
-              <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
-                {formData.learnings || <span className="text-muted-foreground">Ei aktiviteetteja.</span>}
-              </div>
-            )}
-            {isEditing && (
-              <div
-                className="text-right text-xs text-muted absolute right-1 bottom-0"
-                style={formData.learnings.length == 300 ? { color: "red" } : {}}
-              >
-                {formData.learnings.length} / 300
-              </div>
-            )}
-          </div>
-
-          {/* Hours Section */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-muted" />
-              <label className="text-primary font-medium">Työtunnit</label>
-            </div>
-            {isEditing ? (
-              <div className="flex items-center gap-4 select-none ">
-                <div
-                  className="w-full"
-                  onMouseDown={(e) => {
-                    // Prevent accidental drag/select when clicking anywhere in the container except the thumb
-                    if (e.target === e.currentTarget) {
-                      e.preventDefault();
-                    }
-                  }}
-                  onDragStart={(e) => e.preventDefault()}
-                >
-                  <input
-                    type="range"
-                    min="0.25"
-                    max="10"
-                    step="0.25"
-                    value={formData.hours}
+          {/* Only show other form fields when not a sick day */}
+          {!formData.isSickday && (
+            <>
+              {/* Activities Section */}
+              <div className="space-y-3 relative pb-3 -mb-3">
+                <div className="flex items-center space-x-2">
+                  <Briefcase className="w-5 h-5 text-muted" />
+                  <label className="text-primary font-medium">Mitä teit tänään?</label>
+                </div>
+                {isEditing ? (
+                  <textarea
+                    value={formData.activities}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        hours: parseFloat(e.target.value),
+                        activities: e.target.value,
                       })
                     }
-                    className=" range-themed"
-                    disabled={isFormDisabled}
+                    placeholder="Kuvaile päivän pääasialliset aktiviteetit ja tehtävät..."
+                    className="input-field resize-none h-24"
+                    maxLength={300}
+                    required
                   />
-                  <div className="flex justify-between text-xs text-muted pt-1">
-                    <span>15min</span>
-                    <span className="-ml-5">5h</span>
-                    <span>10h</span>
-                  </div>
-                </div>
-                <div className="bg-white/10 rounded-md px-3 py-1.5 w-28 flex flex-col justify-start text-start text-primary select-text">
-                  <span>{`${Math.floor(formData.hours)} tuntia`}</span>
-                  <span>{` ${Math.round((formData.hours % 1) * 60)} min`}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="p-3 rounded-lg bg-white/5 text-secondary">
-                {formData.hours > 0 ? (
-                  <>
-                    {" "}
-                    <span>{`${Math.floor(formData.hours)} tuntia`}</span>
-                    {(formData.hours % 1) * 60 !== 0 && (
-                      <span>{` ${Math.round((formData.hours % 1) * 60)} minuuttia`}</span>
-                    )}
-                  </>
                 ) : (
-                  "Ei työtunteja."
+                  <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
+                    {formData.activities || <span className="text-muted-foreground">Ei aktiviteetteja.</span>}
+                  </div>
+                )}
+                {isEditing && (
+                  <div
+                    className="text-right text-xs text-muted absolute right-1 bottom-0"
+                    style={formData.activities.length == 300 ? { color: "red" } : {}}
+                  >
+                    {formData.activities.length} / 300
+                  </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Meal Location Section */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <MapPin className="w-5 h-5 text-muted" />
-              <label className="text-primary font-medium">Missä söit?</label>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {MEAL_LOCATION_OPTIONS.map((option) =>
-                isEditing ? (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        mealLocation: option.value,
-                      })
-                    }
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      formData.mealLocation === option.value
-                        ? "border-primary-500 bg-primary-500/20 text-primary"
-                        : "border-white/20 glass-card text-secondary glass-card-hover"
-                    } `}
-                    disabled={isFormDisabled}
-                  >
-                    <div className="text-2xl mb-1">{option.icon}</div>
-                    <div className="text-sm font-medium">{option.label}</div>
-                  </button>
-                ) : (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        mealLocation: option.value,
-                      })
-                    }
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      formData.mealLocation === option.value
-                        ? "border-primary-500 bg-primary-500/20 text-primary"
-                        : " border-transparent bg-white/5 text-secondary"
-                    } `}
-                    disabled={isFormDisabled}
-                  >
-                    <div className="text-2xl mb-1">{option.icon}</div>
-                    <div className="text-sm font-medium">{option.label}</div>
-                  </button>
-                )
-              )}
-            </div>
-
-            {formData.mealLocation === "other" &&
-              (isEditing ? (
-                <input
-                  type="text"
-                  maxLength={100}
-                  value={formData.mealLocationOther || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      mealLocationOther: e.target.value,
-                    })
-                  }
-                  placeholder="Määritä missä..."
-                  className="input-field"
-                  disabled={isFormDisabled}
-                />
-              ) : (
-                <div className="p-3 rounded-lg bg-white/5 text-secondary break-words">
-                  {formData.mealLocationOther || "Ei määritelty."}
+              {/* Learnings Section */}
+              <div className="space-y-3 relative pb-3 -mb-3">
+                <div className="flex items-center space-x-2">
+                  <BookOpen className="w-5 h-5 text-muted" />
+                  <label className="text-primary font-medium">Mitä opit?</label>
                 </div>
-              ))}
-          </div>
+                {isEditing ? (
+                  <textarea
+                    value={formData.learnings}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        learnings: e.target.value,
+                      })
+                    }
+                    placeholder="Mitä uusia taitoja, tietoja tai oivalluksia sait?"
+                    className="input-field resize-none h-24"
+                    maxLength={300}
+                    required
+                    disabled={isLoading}
+                  />
+                ) : (
+                  <div className="p-3 w-full rounded-lg bg-white/5 text-secondary min-h-[6rem] whitespace-pre-wrap prose prose-invert prose-sm max-w-none break-words">
+                    {formData.learnings || <span className="text-muted-foreground">Ei aktiviteetteja.</span>}
+                  </div>
+                )}
+                {isEditing && (
+                  <div
+                    className="text-right text-xs text-muted absolute right-1 bottom-0"
+                    style={formData.learnings.length == 300 ? { color: "red" } : {}}
+                  >
+                    {formData.learnings.length} / 300
+                  </div>
+                )}
+              </div>
+
+              {/* Hours Section */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-muted" />
+                  <label className="text-primary font-medium">Työtunnit</label>
+                </div>
+                {isEditing ? (
+                  <div className="flex items-center gap-4 select-none ">
+                    <div
+                      className="w-full"
+                      onMouseDown={(e) => {
+                        // Prevent accidental drag/select when clicking anywhere in the container except the thumb
+                        if (e.target === e.currentTarget) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onDragStart={(e) => e.preventDefault()}
+                    >
+                      <input
+                        type="range"
+                        min="0.25"
+                        max="10"
+                        step="0.25"
+                        value={formData.hours}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            hours: parseFloat(e.target.value),
+                          })
+                        }
+                        className=" range-themed"
+                        disabled={isFormDisabled}
+                      />
+                      <div className="flex justify-between text-xs text-muted pt-1">
+                        <span>15min</span>
+                        <span className="-ml-5">5h</span>
+                        <span>10h</span>
+                      </div>
+                    </div>
+                    <div className="bg-white/10 rounded-md px-3 py-1.5 w-28 flex flex-col justify-start text-start text-primary select-text">
+                      <span>{`${Math.floor(formData.hours)} tuntia`}</span>
+                      <span>{` ${Math.round((formData.hours % 1) * 60)} min`}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-lg bg-white/5 text-secondary">
+                    {formData.hours > 0 ? (
+                      <>
+                        {" "}
+                        <span>{`${Math.floor(formData.hours)} tuntia`}</span>
+                        {(formData.hours % 1) * 60 !== 0 && (
+                          <span>{` ${Math.round((formData.hours % 1) * 60)} minuuttia`}</span>
+                        )}
+                      </>
+                    ) : (
+                      "Ei työtunteja."
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Meal Location Section */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-5 h-5 text-muted" />
+                  <label className="text-primary font-medium">Missä söit?</label>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {MEAL_LOCATION_OPTIONS.map((option) =>
+                    isEditing ? (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            mealLocation: option.value,
+                          })
+                        }
+                        className={`p-3 rounded-xl border-2 transition-all ${
+                          formData.mealLocation === option.value
+                            ? "border-primary-500 bg-primary-500/20 text-primary"
+                            : "border-white/20 glass-card text-secondary glass-card-hover"
+                        } `}
+                        disabled={isFormDisabled}
+                      >
+                        <div className="text-2xl mb-1">{option.icon}</div>
+                        <div className="text-sm font-medium">{option.label}</div>
+                      </button>
+                    ) : (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            mealLocation: option.value,
+                          })
+                        }
+                        className={`p-3 rounded-xl border-2 transition-all ${
+                          formData.mealLocation === option.value
+                            ? "border-primary-500 bg-primary-500/20 text-primary"
+                            : " border-transparent bg-white/5 text-secondary"
+                        } `}
+                        disabled={isFormDisabled}
+                      >
+                        <div className="text-2xl mb-1">{option.icon}</div>
+                        <div className="text-sm font-medium">{option.label}</div>
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {(isEditing || error) && (
             <div className="p-6 border-t border-white/20 flex-shrink-0">

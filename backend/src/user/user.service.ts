@@ -94,6 +94,7 @@ export class UserService {
       startDate: string; // ISO date string
       endDate: string; // ISO date string
       workdays: number[]; // Array of integers representing workdays (0 = Sunday, 1 = Monday, etc.)
+      defaultWorkdayLength: number; // Default workday length in hours
     },
   ) {
     // Update user with registration details
@@ -106,6 +107,7 @@ export class UserService {
         end_date: new Date(body.endDate),
         registrationCompleted: true,
         workdays: body.workdays,
+        defaultWorkdayLength: body.defaultWorkdayLength,
       },
     });
 
