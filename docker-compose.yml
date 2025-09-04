@@ -28,6 +28,3 @@ services:
     volumes:
     - ./keycloak-themes:/opt/keycloak/themes
     command: [ "start-dev" ]
-
-volumes:
-  pgdata:
